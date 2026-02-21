@@ -2,17 +2,12 @@ import { configRead } from '../config.js';
 import Chapters from '../ui/chapters.js';
 import resolveCommand from '../resolveCommand.js';
 import { addLongPress } from './longPress.js';
-import { addPreviews } from './previews.js';
 import { hideShorts } from './hideShorts.js';
-import { applyPreferredVideoCodec } from './videoCodecPreference.js';
-import { applySponsorBlockTimelyActions, applySponsorBlockHighlight } from './sponsorblock.js';
 import { deArrowify } from './deArrowify.js';
 import { hqify } from './hqify.js';
 import { applyAdCleanup, applyBrowseAdFiltering, applyShortsAdFiltering } from './adCleanup.js';
 import { applyPaidContentOverlay } from './paidContentOverlay.js';
 import { applyEndscreen } from './endscreen.js';
-import { applyYouThereRenderer } from './youThereRenderer.js';
-import { applyQueueShelf } from './queueShelf.js';
 import { isShortItem, initShortsTrackingState, shouldFilterShorts, isKnownShortFromShelfMemory, rememberShortsFromShelf, removeShortsShelvesByTitle, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
@@ -812,8 +807,6 @@ JSON.parse = function () {
 
   applyPaidContentOverlay(r, configRead('enablePaidPromotionOverlay'));
 
-  applyPreferredVideoCodec(r, configRead('videoPreferredCodec'));
-
   // Drop "masthead" ad from home screen
   if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
     const currentPage = getCurrentPage();
@@ -864,7 +857,6 @@ JSON.parse = function () {
   }
 
   applyEndscreen(r, configRead('enableHideEndScreenCards'));
-  applyYouThereRenderer(r, configRead('enableYouThereRenderer'));
 
   // Remove shorts ads
   applyShortsAdFiltering(r, adBlockEnabled);
@@ -1062,7 +1054,7 @@ JSON.parse = function () {
             if (LOG_WATCHED && DEBUG_ENABLED) {
               console.log(`[SUBSCRIPTIONS] Section ${idx}, Item ${itemIdx}: SHELF`);
             }
-            processShelves([content], false);
+            processShelves([content]);
           }
           // Process rich grid content
           else if (content?.richGridRenderer?.contents) {
@@ -1197,12 +1189,8 @@ JSON.parse = function () {
   }
 
   if (r?.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer) {
-    processShelves(r.contents.singleColumnWatchNextResults.pivot.sectionListRenderer.contents, false);
-    applyQueueShelf(r);
+    processShelves(r.contents.singleColumnWatchNextResults.pivot.sectionListRenderer.contents);
   }
-
-  applySponsorBlockTimelyActions(r, configRead('sponsorBlockManualSkips'));
-  applySponsorBlockHighlight(r, configRead('enableSponsorBlockHighlight'));
   
   // UNIVERSAL FALLBACK - Filter EVERYTHING if we're on a critical page
   const currentPage = getCurrentPage();
@@ -1276,7 +1264,7 @@ for (const key in window._yttv) {
   }
 }
 
-function processShelves(shelves, shouldAddPreviews = true) {  
+function processShelves(shelves) {  
   if (!Array.isArray(shelves)) {
     console.warn('[SHELF_PROCESS] processShelves called with non-array', { type: typeof shelves });
     return;
@@ -1360,7 +1348,6 @@ function processShelves(shelves, shouldAddPreviews = true) {
           deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
           hqify(items, configRead('enableHqThumbnails'));
           addLongPress(items, configRead('enableLongPress'));
-          addPreviews(items, shouldAddPreviews);
           
           // ⭐ SHORTS FILTERING
           if (!shortsEnabled) {
@@ -1404,7 +1391,6 @@ function processShelves(shelves, shouldAddPreviews = true) {
           deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
           hqify(items, configRead('enableHqThumbnails'));
           addLongPress(items, configRead('enableLongPress'));
-          addPreviews(items, shouldAddPreviews);
           
           if (!shortsEnabled) {
             const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1445,7 +1431,6 @@ function processShelves(shelves, shouldAddPreviews = true) {
           deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
           hqify(items, configRead('enableHqThumbnails'));
           addLongPress(items, configRead('enableLongPress'));
-          addPreviews(items, shouldAddPreviews);
           
           if (!shortsEnabled) {
             const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1487,7 +1472,6 @@ function processShelves(shelves, shouldAddPreviews = true) {
         deArrowify(contents, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
         hqify(contents, configRead('enableHqThumbnails'));
         addLongPress(contents, configRead('enableLongPress'));
-        addPreviews(contents, shouldAddPreviews);
         
         if (!shortsEnabled) {
           const shortResult = filterShortItems(contents, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1547,7 +1531,6 @@ function processShelves(shelves, shouldAddPreviews = true) {
         deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
         hqify(items, configRead('enableHqThumbnails'));
         addLongPress(items, configRead('enableLongPress'));
-        addPreviews(items, shouldAddPreviews);
         
         if (!shortsEnabled) {
           const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
