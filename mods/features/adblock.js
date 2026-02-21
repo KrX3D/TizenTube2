@@ -612,8 +612,20 @@ let skipUniversalFilter = false;  // ⭐ NEW: Global flag to skip filtering duri
 // ⭐ AUTO-LOADER FUNCTION: Must be in global scope so setTimeout can access it
 function startPlaylistAutoLoad() {
   console.log('▶▶▶▶▶▶▶▶▶▶ AUTO-LOAD CALLED ◀◀◀◀◀◀◀◀◀◀');
-  console.log('▶▶▶ Current page:', getCurrentPage());
+  const currentPage = getCurrentPage();
+  console.log('▶▶▶ Current page:', currentPage);
   console.log('▶▶▶ autoLoadInProgress:', autoLoadInProgress);
+
+  // Playlist-only flow: if navigation changed while deferred callbacks are pending,
+  // ensure we fully reset and skip auto-loader work.
+  if (currentPage !== 'playlist' && currentPage !== 'playlists') {
+    autoLoadInProgress = false;
+    skipUniversalFilter = false;
+    if (DEBUG_ENABLED) {
+      console.log('[PLAYLIST_AUTOLOAD] Aborting: page is no longer a playlist');
+    }
+    return;
+  }
   
   if (autoLoadInProgress) {
     if (DEBUG_ENABLED) {
@@ -645,6 +657,7 @@ function startPlaylistAutoLoad() {
       }
       clearInterval(autoLoadInterval);
       autoLoadInProgress = false;
+      skipUniversalFilter = false;
       return;
     }
     
