@@ -1,8 +1,6 @@
 import { configWrite, configRead } from './config.js';
 import modernUI, { optionShow } from './ui/settings.js';
-import { speedSettings } from './ui/speedUI.js';
 import { showToast, buttonItem } from './ui/ytUI.js';
-import checkForUpdates from './features/updater.js';
 import appPkg from '../package.json';
 const APP_VERSION = appPkg.version;
 const APP_VERSION_LABEL = `v${APP_VERSION.split('.').pop()}`;
@@ -120,9 +118,6 @@ function customAction(action, parameters) {
         case 'TT_SETTINGS_SHOW':
             modernUI();
             break;
-        case 'TT_SPEED_SETTINGS_SHOW':
-            speedSettings();
-            break;
         case 'UPDATE_REMIND_LATER':
             configWrite('dontCheckUpdateUntil', parameters);
             break;
@@ -136,17 +131,6 @@ function customAction(action, parameters) {
             break;
         case 'SHOW_TOAST':
             showToast('TizenTube', parameters);
-            break;
-        case 'ADD_TO_QUEUE':
-            window.queuedVideos.videos.push(parameters);
-            showToast('TizenTube', 'Video added to queue.');
-            break;
-        case 'CLEAR_QUEUE':
-            window.queuedVideos.videos = [];
-            showToast('TizenTube', 'Video queue cleared.');
-            break;
-        case 'CHECK_FOR_UPDATES':
-            checkForUpdates(true);
             break;
         case 'TOGGLE_DEBUG_CONSOLE':
             if (typeof window.toggleDebugConsole === 'function') {

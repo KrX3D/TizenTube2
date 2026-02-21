@@ -1,6 +1,5 @@
 import { configRead } from '../config.js';
 import { showModal, buttonItem, overlayPanelItemListRenderer, scrollPaneRenderer, overlayMessageRenderer, QrCodeRenderer } from './ytUI.js';
-import { getUserLanguageOptionName } from '../features/moreSubtitles.js';
 import qrcode from 'qrcode-npm';
 
 const qrcodes = {};
@@ -105,21 +104,6 @@ export default function modernUI(update, parameters) {
             ]
         },
         {
-            name: 'Subtitles',
-            icon: 'TRANSLATE',
-            value: null,
-            options: [
-                {
-                    name: getUserLanguageOptionName(),
-                    value: 'enableShowUserLanguage'
-                },
-                {
-                    name: 'Show Hidden Subtitles',
-                    value: 'enableShowOtherLanguages'
-                }
-            ]
-        },
-        {
             name: 'Video Player Settings',
             icon: 'VIDEO_YOUTUBE',
             value: null,
@@ -155,23 +139,6 @@ export default function modernUI(update, parameters) {
                             value: 'enableSpeedControlsButton'
                         }
                     ]
-                },
-                {
-                    name: 'Speed Settings Increments',
-                    icon: 'SLOW_MOTION_VIDEO',
-                    value: null,
-                    menuId: 'tt-speed-settings-increments',
-                    menuHeader: {
-                        title: 'Speed Settings Increments',
-                        subtitle: 'Set the speed increments for video playback speed adjustments'
-                    },
-                    options: [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5].map((increment) => {
-                        return {
-                            name: `${increment}x`,
-                            key: 'speedSettingsIncrement',
-                            value: increment
-                        }
-                    })
                 }
             ]
         },
