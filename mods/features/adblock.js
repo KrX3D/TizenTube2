@@ -1793,14 +1793,3 @@ function cleanupPlaylistHelperTiles() {
     }
   }
 }
-
-
-// Update the interval check
-if (typeof window !== 'undefined') {
-  setInterval(() => {
-    const page = getCurrentPage();
-    if (page === 'playlist' || page === 'playlists') {
-      cleanupPlaylistHelperTiles();
-    }
-  }, 1200);
-}
