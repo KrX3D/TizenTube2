@@ -1,17 +1,6 @@
 const CONFIG_KEY = 'ytaf-configuration';
 const defaultConfig = {
   enableAdBlock: true,
-  enableSponsorBlock: true,
-  sponsorBlockManualSkips: ['intro', 'outro', 'filler'],
-  enableSponsorBlockSponsor: true,
-  enableSponsorBlockIntro: true,
-  enableSponsorBlockOutro: true,
-  enableSponsorBlockInteraction: true,
-  enableSponsorBlockSelfPromo: true,
-  enableSponsorBlockPreview: true,
-  enableSponsorBlockMusicOfftopic: true,
-  enableSponsorBlockFiller: false,
-  enableSponsorBlockHighlight: true,
   videoSpeed: 1,
   preferredVideoQuality: 'auto',
   enableDeArrow: true,
@@ -47,7 +36,6 @@ const defaultConfig = {
       'more',
       'watch'
   ],
-  enablePlaylistContinueButton: true,
   enableHideEndScreenCards: false,
   enableYouThereRenderer: false,
   lastAnnouncementCheck: 0,
@@ -60,8 +48,6 @@ const defaultConfig = {
   launchToOnStartup: null,
   disabledSidebarContents: ['TROPHY', 'NEWS', 'YOUTUBE_MUSIC', 'BROADCAST', 'CLAPPERBOARD', 'LIVE', 'GAMING', 'TAB_MORE'],
   enableUpdater: true,
-  autoFrameRate: false,
-  autoFrameRatePauseVideoFor: 0,
   enableDebugConsole: false,
   debugConsolePosition: 'bottom-right', // top-left, top-right, bottom-left, bottom-right, center
   debugConsoleHeight: '500',

@@ -1,5 +1,4 @@
 import { configRead } from '../config.js';
-import Chapters from '../ui/chapters.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
 import { applyAdCleanup, applyBrowseAdFiltering, applyShortsAdFiltering } from './adCleanup.js';
@@ -716,16 +715,6 @@ function startPlaylistAutoLoad() {
         
         // Scroll back to top
         window.scrollTo(0, 0);
-        
-        // Force a page refresh to apply filters
-        setTimeout(() => {
-          const page = getCurrentPage();
-          scanAndFilterAllArrays(document, page);
-          
-          if (DEBUG_ENABLED) {
-            console.log('[PLAYLIST_AUTOLOAD] Filtering complete!');
-          }
-        }, 500);
       }
     } else {
       stableCount = 0;
