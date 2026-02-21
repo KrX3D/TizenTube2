@@ -1,0 +1,42 @@
+import resolveCommand from "./resolveCommand.js";
+import appPkg from "../package.json";
+const APP_VERSION = appPkg.version;
+const APP_VERSION_LABEL = `v${APP_VERSION.split('.').pop()}`;
+
+import { configWrite } from "./config.js";
+
+import { initVisualConsole } from "./features/visualConsole.js";
+
+initVisualConsole({
+  APP_VERSION,
+  APP_VERSION_LABEL,
+  resolveCommand,
+  configWrite
+});
+
+import "./features/remoteLogging.js";
+import "./features/userAgentSpoofing.js";
+import "whatwg-fetch";
+import 'core-js/proposals/object-getownpropertydescriptors';
+import '@formatjs/intl-getcanonicallocales/polyfill.iife'
+import '@formatjs/intl-locale/polyfill.iife'
+import '@formatjs/intl-displaynames/polyfill.iife'
+import '@formatjs/intl-displaynames/locale-data/en';
+
+import "./domrect-polyfill";
+import "./features/adblock.js";
+import "./features/sponsorblock.js";
+import "./ui/ui.js";
+import "./ui/speedUI.js";
+import "./ui/theme.js";
+import "./ui/settings.js";
+import "./ui/disableWhosWatching.js";
+import "./features/moreSubtitles.js";
+import "./features/updater.js";
+import "./features/pictureInPicture.js";
+import "./features/preferredVideoQuality.js";
+import "./features/videoQueuing.js";
+import "./features/enableFeatures.js";
+import "./ui/customUI.js";
+import "./ui/customGuideAction.js";
+

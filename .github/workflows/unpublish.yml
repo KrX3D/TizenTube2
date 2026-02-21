@@ -1,0 +1,119 @@
+name: Unpublish package from npm (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to unpublish (e.g. 1.15.19). REQUIRED.'
+        required: true
+        default: ''
+      force:
+        description: 'Set to "true" to force-unpublish the entire package (--force). Optional.'
+        required: false
+        default: 'false'
+
+env:
+  # Keep the package name fixed here
+  PACKAGE_NAME: '@krx3d/tizentube'   # <-- edit if needed
+
+jobs:
+  unpublish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (optional)
+        uses: actions/checkout@v4
+
+      - name: Resolve inputs
+        id: resolve
+        run: |
+          set -euo pipefail
+          VERSION="${{ github.event.inputs.version }}"
+          FORCE_INPUT="${{ github.event.inputs.force }}"
+
+          if [ -z "$VERSION" ]; then
+            echo "::error::'version' input is required."
+            exit 1
+          fi
+
+          case "${FORCE_INPUT,,}" in
+            "true"|"1"|"yes" ) FORCE="true" ;;
+            * ) FORCE="false" ;;
+          esac
+
+          echo "package=${PACKAGE_NAME}" >> "$GITHUB_OUTPUT"
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "force=${FORCE}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure npm auth (write ~/.npmrc)
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::error::NPM_TOKEN secret is not set"
+            exit 1
+          fi
+          # Write a per-run ~/.npmrc so npm uses the token
+          printf "//registry.npmjs.org/:_authToken=%s\n" "$NPM_TOKEN" > ~/.npmrc
+          # Ensure always-auth so npm uses token for the registry
+          printf "always-auth=true\n" >> ~/.npmrc
+          echo "Wrote ~/.npmrc and set auth token."
+
+      - name: Verify version exists on npm (unless force)
+        if: steps.resolve.outputs.force != 'true'
+        env:
+          NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org/'
+        run: |
+          set -euo pipefail
+          PKG="${{ steps.resolve.outputs.package }}"
+          VER="${{ steps.resolve.outputs.version }}"
+          echo "Checking npm for ${PKG}@${VER} ..."
+          # Show metadata for debugging
+          npm view "${PKG}@${VER}" --json || { echo "::error::Version not found on registry"; exit 1; }
+          echo "Version exists."
+
+      - name: Run unpublish
+        env:
+          NPM_CONFIG_REGISTRY: 'https://registry.npmjs.org/'
+        run: |
+          set -euo pipefail
+          PKG="${{ steps.resolve.outputs.package }}"
+          VER="${{ steps.resolve.outputs.version }}"
+          FORCE="${{ steps.resolve.outputs.force }}"
+
+          if [ "$FORCE" = "true" ]; then
+            echo "Running: npm unpublish ${PKG} --force"
+            npm unpublish "${PKG}" --force
+          else
+            echo "Running: npm unpublish ${PKG}@${VER}"
+            npm unpublish "${PKG}@${VER}"
+          fi
+
+      # ----------------------------
+      # Purge jsDelivr cache (release only)
+      # ----------------------------
+      - name: Wait for npm propagation
+        #if: github.event_name == 'release'
+        run: sleep 10
+        
+      - name: Purge jsDelivr cache
+        #if: github.event_name == 'release'
+        run: |
+          echo "Purging jsDelivr cache for @krx3d/tizentube..."
+          
+          # Purge latest tag
+          curl -i "https://purge.jsdelivr.net/npm/@krx3d/tizentube@latest/package.json" || true
+          
+          # Purge all versions
+          curl -i "https://purge.jsdelivr.net/npm/@krx3d/tizentube@*/package.json" || true
+          
+          # Purge default (no version)
+          curl -i "https://purge.jsdelivr.net/npm/@krx3d/tizentube/package.json" || true
+          
+          # Purge entire package (all files)
+          curl -i "https://purge.jsdelivr.net/npm/@krx3d/tizentube@*" || true
+          
+          echo "✅ jsDelivr cache purge requests sent"
+
+      - name: Done
+        run: echo "Unpublish finished."
