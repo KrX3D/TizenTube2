@@ -21,7 +21,6 @@ window.adblock.setDebugEnabled = function(value) {
 };
 // Listen for config changes to update DEBUG_ENABLED cache
 if (typeof window !== 'undefined') {
-  if (!window._playlistButtonObserver) {
   setTimeout(() => {
     if (window.configChangeEmitter) {
       window.configChangeEmitter.addEventListener('configChange', (e) => {
@@ -1792,4 +1791,15 @@ function cleanupPlaylistHelperTiles() {
       console.log('[HELPER_CLEANUP_DOM] Removed:', removedCount, '| Hidden:', hiddenCount);
     }
   }
+}
+
+// Update the interval check
+if (typeof window !== 'undefined') {
+  let lastPlaylistButtonHref = window.location.href;
+  setInterval(() => {
+    const page = getCurrentPage();
+    if (page === 'playlist' || page === 'playlists') {
+      cleanupPlaylistHelperTiles();
+    }
+  }, 1200);
 }
