@@ -1,13 +1,8 @@
 import { configRead } from '../config.js';
 import Chapters from '../ui/chapters.js';
 import resolveCommand from '../resolveCommand.js';
-import { addLongPress } from './longPress.js';
 import { hideShorts } from './hideShorts.js';
-import { deArrowify } from './deArrowify.js';
-import { hqify } from './hqify.js';
 import { applyAdCleanup, applyBrowseAdFiltering, applyShortsAdFiltering } from './adCleanup.js';
-import { applyPaidContentOverlay } from './paidContentOverlay.js';
-import { applyEndscreen } from './endscreen.js';
 import { isShortItem, initShortsTrackingState, shouldFilterShorts, isKnownShortFromShelfMemory, rememberShortsFromShelf, removeShortsShelvesByTitle, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
@@ -805,8 +800,6 @@ JSON.parse = function () {
 
   applyAdCleanup(r, adBlockEnabled);
 
-  applyPaidContentOverlay(r, configRead('enablePaidPromotionOverlay'));
-
   // Drop "masthead" ad from home screen
   if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
     const currentPage = getCurrentPage();
@@ -855,8 +848,6 @@ JSON.parse = function () {
       }
     }
   }
-
-  applyEndscreen(r, configRead('enableHideEndScreenCards'));
 
   // Remove shorts ads
   applyShortsAdFiltering(r, adBlockEnabled);
@@ -1010,9 +1001,6 @@ JSON.parse = function () {
         count: r.continuationContents.horizontalListContinuation.items.length
       });
     }
-    deArrowify(r.continuationContents.horizontalListContinuation.items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-    hqify(r.continuationContents.horizontalListContinuation.items, configRead('enableHqThumbnails'));
-    addLongPress(r.continuationContents.horizontalListContinuation.items, configRead('enableLongPress'));
     r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
   }
 
@@ -1344,10 +1332,6 @@ function processShelves(shelves) {
           let items = shelve.shelfRenderer.content.horizontalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
-                  
-          deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-          hqify(items, configRead('enableHqThumbnails'));
-          addLongPress(items, configRead('enableLongPress'));
           
           // ⭐ SHORTS FILTERING
           if (!shortsEnabled) {
@@ -1387,10 +1371,6 @@ function processShelves(shelves) {
           let items = shelve.shelfRenderer.content.gridRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
-
-          deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-          hqify(items, configRead('enableHqThumbnails'));
-          addLongPress(items, configRead('enableLongPress'));
           
           if (!shortsEnabled) {
             const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1427,10 +1407,6 @@ function processShelves(shelves) {
           let items = shelve.shelfRenderer.content.verticalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
-
-          deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-          hqify(items, configRead('enableHqThumbnails'));
-          addLongPress(items, configRead('enableLongPress'));
           
           if (!shortsEnabled) {
             const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1468,10 +1444,6 @@ function processShelves(shelves) {
         let contents = shelve.richShelfRenderer.content.richGridRenderer.contents;
         const originalContents = Array.isArray(contents) ? contents.slice() : [];
         itemsBefore = contents.length;
-
-        deArrowify(contents, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-        hqify(contents, configRead('enableHqThumbnails'));
-        addLongPress(contents, configRead('enableLongPress'));
         
         if (!shortsEnabled) {
           const shortResult = filterShortItems(contents, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
@@ -1527,10 +1499,6 @@ function processShelves(shelves) {
         let items = shelve.gridRenderer.items;
         const originalItems = Array.isArray(items) ? items.slice() : [];
         itemsBefore = items.length;
-
-        deArrowify(items, configRead('enableDeArrow'), configRead('enableDeArrowThumbnails'));
-        hqify(items, configRead('enableHqThumbnails'));
-        addLongPress(items, configRead('enableLongPress'));
         
         if (!shortsEnabled) {
           const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
