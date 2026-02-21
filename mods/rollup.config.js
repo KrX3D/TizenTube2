@@ -25,28 +25,13 @@ export default {
             babelHelpers: 'bundled',
             presets: [
                 ['@babel/preset-env', {
-                    // Keep broad compatibility for older Tizen WebViews that can still receive
-                    // current CDN bundles but fail on newer syntax.
-                    targets: {
-                        chrome: '47'
-                    },
-                    // Keep polyfills for safety
-                    useBuiltIns: false,
-                    // Don't transform modules (Rollup handles that)
-                    modules: false
+                    targets: 'Chrome 47',
                 }],
             ],
         }),
         terser({
             ecma: 5,
             mangle: true,
-            // Keep WebSocket and other important globals
-            compress: {
-                pure_getters: true,
-                unsafe: false,
-                unsafe_comps: false,
-                warnings: false
-            }
         }),
     ]
 };
