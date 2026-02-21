@@ -118,17 +118,6 @@ function customAction(action, parameters) {
         case 'TT_SETTINGS_SHOW':
             modernUI();
             break;
-        case 'UPDATE_REMIND_LATER':
-            configWrite('dontCheckUpdateUntil', parameters);
-            break;
-        case 'UPDATE_DOWNLOAD':
-            window.h5vcc.tizentube.InstallAppFromURL(parameters);
-            showToast('TizenTube Update', 'Downloading update, please wait...');
-            break;
-        case 'SET_PLAYER_SPEED':
-            const speed = Number(parameters);
-            document.querySelector('video').playbackRate = speed;
-            break;
         case 'SHOW_TOAST':
             showToast('TizenTube', parameters);
             break;
@@ -145,27 +134,6 @@ function customAction(action, parameters) {
                 showToast('Debug Console', 'Console ' + (newValue ? 'shown' : 'hidden'));
             } else {
                 showToast('Debug Console', 'Console not available');
-            }
-            break;
-        case 'FORCE_SHOW_CONSOLE':
-            console.log('========================================');
-            console.log('FORCE SHOW CONSOLE TEST');
-            console.log('[Console] Visual Console ' + APP_VERSION_LABEL + ' (' + APP_VERSION + ')');
-            console.log('========================================');
-            console.log('Time:', new Date().toISOString());
-            console.error('This is an ERROR message');
-            console.warn('This is a WARN message');
-            
-            // Try to find the console div
-            const consoleDiv = document.getElementById('tv-debug-console');
-            if (consoleDiv) {
-                consoleDiv.style.display = 'block';
-                consoleDiv.style.zIndex = '999999';
-                console.log('✓ Console DIV found and forced visible')
-                showToast('Console', 'Console should be visible now');
-            } else {
-                console.error('✗ Console DIV not found!');
-                showToast('Console', 'ERROR: Console DIV not found');
             }
             break;
     }

@@ -7,76 +7,6 @@ const qrcodes = {};
 export default function modernUI(update, parameters) {
     const settings = [
         {
-            name: 'Support TizenTube',
-            icon: 'MONEY_HEART',
-            value: null,
-            options: {
-                title: 'Support TizenTube',
-                subtitle: '❤️ Show support for TizenTube and its development',
-                content: scrollPaneRenderer([
-                    overlayMessageRenderer('If you enjoy using TizenTube and would like to support its development, consider the following:'),
-                    overlayMessageRenderer('1. Star the GitHub repository to help increase its visibility.'),
-                    overlayMessageRenderer('2. Share TizenTube with others.'),
-                    overlayMessageRenderer('If you would like to contribute financially, consider donating:'),
-                    overlayMessageRenderer('- GitHub Sponsors: https://github.com/sponsors/reisxd')
-                ])
-            }
-        },
-        {
-            name: 'Social Media Links',
-            icon: 'PRIVACY_UNLISTED',
-            value: null,
-            options: [
-                {
-                    name: 'GitHub',
-                    link: 'https://github.com/reisxd/TizenTube',
-                },
-                {
-                    name: 'YouTube',
-                    link: 'https://www.youtube.com/@tizenbrew',
-                },
-                {
-                    name: 'Discord',
-                    link: 'https://discord.gg/m2P7v8Y2qR',
-                },
-                {
-                    name: 'Telegram (Announcements)',
-                    link: 'https://t.me/tizentubecobaltofficial',
-                },
-                {
-                    name: 'Telegram (Group)',
-                    link: 'https://t.me/tizentubeofficial',
-                },
-                {
-                    name: 'Website',
-                    link: 'https://tizentube.6513006.xyz',
-                }
-            ].map((option) => {
-                if (!qrcodes[option.name]) {
-                    const qr = qrcode.qrcode(6, 'H');
-                    qr.addData(option.link);
-                    qr.make();
-
-                    const qrDataImgTag = qr.createImgTag(8, 8);
-                    const qrDataUrl = qrDataImgTag.match(/src="([^"]+)"/)[1];
-                    qrcodes[option.name] = qrDataUrl;
-                }
-                return {
-                    name: option.name,
-                    icon: 'OPEN_IN_NEW',
-                    value: null,
-                    options: {
-                        title: option.name,
-                        subtitle: option.link,
-                        content: overlayPanelItemListRenderer([
-                            overlayMessageRenderer(`You can visit the ${option.name} page by scanning the QR code below.`),
-                            QrCodeRenderer(qrcodes[option.name])
-                        ])
-                    }
-                }
-            })
-        },
-        {
             name: 'Ad block',
             icon: 'DOLLAR_SIGN',
             value: 'enableAdBlock'
@@ -86,11 +16,6 @@ export default function modernUI(update, parameters) {
             icon: 'SETTINGS',
             value: null,
             options: [
-                {
-                    name: "Who's Watching Menu",
-                    icon: 'ACCOUNT_CIRCLE',
-                    value: 'enableWhoIsWatchingMenu'
-                },
                 {
                     name: 'Fix UI',
                     icon: 'STAR',
@@ -128,16 +53,6 @@ export default function modernUI(update, parameters) {
                             icon: 'SKIP_NEXT',
                             value: 'enablePreviousNextButtons'
                         },
-                        {
-                            name: 'Super Thanks Button',
-                            icon: 'MONEY_HEART',
-                            value: 'enableSuperThanksButton'
-                        },
-                        {
-                            name: 'Speed Controls Button',
-                            icon: 'SLOW_MOTION_VIDEO',
-                            value: 'enableSpeedControlsButton'
-                        }
                     ]
                 }
             ]
@@ -487,98 +402,6 @@ export default function modernUI(update, parameters) {
                         name: 'Debug Console',
                         icon: 'VISIBILITY',
                         value: 'enableDebugConsole'
-                    },
-                    {
-                        name: 'Debug Console Position',
-                        icon: 'SETTINGS',
-                        value: null,
-                        menuId: 'tt-debug-console-position',
-                        menuHeader: {
-                            title: 'Debug Console Position',
-                            subtitle: 'Choose where to display the debug console'
-                        },
-                        options: [
-                            {
-                                name: 'Top Left',
-                                key: 'debugConsolePosition',
-                                value: 'top-left'
-                            },
-                            {
-                                name: 'Top Right',
-                                key: 'debugConsolePosition',
-                                value: 'top-right'
-                            },
-                            {
-                                name: 'Bottom Left',
-                                key: 'debugConsolePosition',
-                                value: 'bottom-left'
-                            },
-                            {
-                                name: 'Bottom Right',
-                                key: 'debugConsolePosition',
-                                value: 'bottom-right'
-                            },
-                            {
-                                name: 'Center',
-                                key: 'debugConsolePosition',
-                                value: 'center'
-                            }
-                        ]
-                    },
-                    {
-                        name: 'Debug Console Height',
-                        icon: 'SETTINGS',
-                        value: null,
-                        menuId: 'tt-debug-console-height',
-                        menuHeader: {
-                            title: 'Debug Console Height',
-                            subtitle: 'Choose console window height'
-                        },
-                        options: [
-                            {
-                                name: 'Normal (500px)',
-                                key: 'debugConsoleHeight',
-                                value: '500'
-                            },
-                            {
-                                name: 'Tall (800px)',
-                                key: 'debugConsoleHeight',
-                                value: '800'
-                            },
-                            {
-                                name: 'Full Screen (1054px)',
-                                key: 'debugConsoleHeight',
-                                value: '1054'
-                            }
-                        ]
-                    },
-                    {
-                        name: '🧪 Test Console',
-                        icon: 'SETTINGS',
-                        value: null,
-                        options: {
-                            title: 'Test Console',
-                            subtitle: 'Force show console and test logging',
-                            content: overlayPanelItemListRenderer([
-                                buttonItem(
-                                    { title: 'Force Show Console' },
-                                    { icon: 'VISIBILITY' },
-                                    [
-                                        {
-                                            customAction: {
-                                                action: 'FORCE_SHOW_CONSOLE'
-                                            }
-                                        },
-                                        {
-                                            signalAction: {
-                                                signal: 'POPUP_BACK'
-                                            }
-                                        }
-                                    ]
-                                ),
-                                
-                                ])
-                        }
                     }
                 ];
             }

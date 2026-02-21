@@ -201,21 +201,6 @@ function execute_once_dom_loaded() {
   document.addEventListener('keydown', eventHandler, true);
   document.addEventListener('keypress', eventHandler, true);
   document.addEventListener('keyup', eventHandler, true);
-  if (configRead('showWelcomeToast')) {
-    setTimeout(() => {
-      showToast('Welcome to TizenTube', 'Go to settings and click on TizenTube Settings for settings, press [RED] to open TizenTube Theme Settings.');
-    }, 2000);
-  }
-
-  if (configRead('launchToOnStartup')) {
-    resolveCommand(JSON.parse(configRead('launchToOnStartup')));
-  } else {
-    resolveCommand({
-      signalAction: {
-        signal: 'SOFT_RELOAD_PAGE'
-      }
-    });
-  }
 
   const commandExecutor = getCommandExecutor();
   if (commandExecutor) {

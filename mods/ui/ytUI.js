@@ -184,59 +184,6 @@ function timelyAction(text, icon, command, triggerTimeMs, timeoutMs) {
             type: ''
         }
     }
-
-}
-
-function longPressData(data) {
-    return {
-        clickTrackingParams: null,
-        showMenuCommand: {
-            contentId: data.videoId,
-            thumbnail: {
-                thumbnails: data.thumbnails
-            },
-            title: {
-                simpleText: data.title
-            },
-            subtitle: {
-                simpleText: data.subtitle
-            },
-            menu: {
-                menuRenderer: {
-                    items: [
-                        MenuNavigationItemRenderer('Play', {
-                            clickTrackingParams: null,
-                            watchEndpoint: data.watchEndpointData
-                        }),
-                        MenuServiceItemRenderer('Save to Watch Later', {
-                            clickTrackingParams: null,
-                            playlistEditEndpoint: {
-                                playlistId: 'WL',
-                                actions: [
-                                    {
-                                        addedVideoId: data.videoId,
-                                        action: 'ACTION_ADD_VIDEO'
-                                    }
-                                ]
-                            }
-                        }),
-                        MenuNavigationItemRenderer('Save to Playlist', {
-                            clickTrackingParams: null,
-                            addToPlaylistEndpoint: {
-                                videoId: data.videoId
-                            }
-                        }),
-                    ],
-                    trackingParams: null,
-                    accessibility: {
-                        accessibilityData: {
-                            label: 'Video options'
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 function MenuServiceItemRenderer(text, serviceEndpoint) {
@@ -450,7 +397,6 @@ export {
     overlayMessageRenderer,
     timelyAction,
     scrollPaneRenderer,
-    longPressData,
     MenuServiceItemRenderer,
     SettingsCategory,
     SettingActionRenderer,
