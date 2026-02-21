@@ -89,7 +89,9 @@ export function patchResolveCommand() {
                 } else if (cmd?.watchEndpoint?.videoId) {
                     window.isPipPlaying = false;
                     const ytlrPlayerContainer = document.querySelector('ytlr-player-container');
-                    ytlrPlayerContainer.style.removeProperty('z-index');
+                    if (ytlrPlayerContainer?.style) {
+                        ytlrPlayerContainer.style.removeProperty('z-index');
+                    }
                 }
 
                 return ogResolve.call(this, cmd, _);

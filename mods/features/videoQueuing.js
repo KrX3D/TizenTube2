@@ -44,7 +44,10 @@ function addListener() {
                 setTimeout(() => resolveCommand(videoWatchEndpoint), 500);
             }
         } else if (playerStateObject.isPlaying) {
-            document.getElementById('container').style.setProperty('opacity', '1', 'important');
+            const appContainer = document.getElementById('container');
+            if (appContainer?.style) {
+                appContainer.style.setProperty('opacity', '1', 'important');
+            }
             if (window.queuedVideos.videos.find(v => v.contentId === videoData.video_id)) {
                 window.queuedVideos.lastVideoId = videoData.video_id;
             }
