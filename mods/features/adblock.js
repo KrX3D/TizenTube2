@@ -33,35 +33,6 @@ if (typeof window !== 'undefined') {
   }, 100);
 }
 
-// ⭐ NO CSS HIDING - Helpers will be visible, but that's OK
-// Trying to hide them causes empty space and layout issues
-function trackRemovedPlaylistHelpers(helperIds) {
-  if (!window._playlistRemovedHelpers) {
-    window._playlistRemovedHelpers = new Set();
-  }
-  if (!window._playlistRemovedHelperKeys) {
-    window._playlistRemovedHelperKeys = new Set();
-  }
-  if (!window._playlistRemovedHelperQueue) {
-    window._playlistRemovedHelperQueue = [];
-  }
-
-  helperIds.forEach((helperId) => {
-    if (!helperId || helperId === 'unknown') return;
-    if (!window._playlistRemovedHelpers.has(helperId)) {
-      window._playlistRemovedHelpers.add(helperId);
-      window._playlistRemovedHelperQueue.push(helperId);
-    }
-  });
-
-  const MAX_REMOVED_HELPERS = 25;
-  while (window._playlistRemovedHelperQueue.length > MAX_REMOVED_HELPERS) {
-    const oldest = window._playlistRemovedHelperQueue.shift();
-    window._playlistRemovedHelpers.delete(oldest);
-  }
-}
-
-
 function getVideoId(item) {
   return item?.tileRenderer?.contentId ||
     item?.videoRenderer?.videoId ||
@@ -295,7 +266,6 @@ function directFilterArray(arr, page, context = '') {
     
     // ⭐ DON'T insert helpers into new batch - they're already rendered!
     // Just track them for removal if they appear
-    trackRemovedPlaylistHelpers(helperIdsToRemove);
     trackRemovedPlaylistHelperKeys(window._lastHelperVideos);
     
     // Clear helpers immediately (don't wait for last batch)
@@ -478,7 +448,6 @@ function directFilterArray(arr, page, context = '') {
         console.log('[CLEANUP] Found', noProgressBarCount, 'unwatched - clearing', window._lastHelperVideos.length, 'stored helper(s)');
       }
       const helperIdsToTrack = window._lastHelperVideos.map((video) => getVideoId(video)).filter(Boolean);
-      trackRemovedPlaylistHelpers(helperIdsToTrack);
       trackRemovedPlaylistHelperKeys(window._lastHelperVideos);
       window._lastHelperVideos = [];
       window._playlistScrollHelpers.clear();
