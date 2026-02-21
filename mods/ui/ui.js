@@ -6,7 +6,6 @@ import updateStyle from './theme.js';
 import { showToast } from './ytUI.js';
 import modernUI from './settings.js';
 import resolveCommand, { patchResolveCommand } from '../resolveCommand.js';
-import { pipToFullscreen } from '../features/pictureInPicture.js';
 import getCommandExecutor from './customCommandExecution.js';
 
 // It just works, okay?
@@ -191,17 +190,6 @@ function execute_once_dom_loaded() {
             }
         }
         return false;
-    }
-    
-    // Right arrow - PiP handling (keep this)
-    if (evt.keyCode == 39) {
-      if (evt.type === 'keydown') {
-        if (document.querySelector('ytlr-search-text-box > .zylon-focus') && window.isPipPlaying) {
-          const ytlrPlayer = document.querySelector('ytlr-player');
-          ytlrPlayer.style.setProperty('background-color', 'rgb(0, 0, 0)');
-          pipToFullscreen();
-        }
-      }
     }
     
     return true;

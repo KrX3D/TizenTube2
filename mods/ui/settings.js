@@ -83,153 +83,10 @@ export default function modernUI(update, parameters) {
             value: 'enableAdBlock'
         },
         {
-            name: 'SponsorBlock',
-            icon: 'MONEY_HAND',
-            value: null,
-            menuId: 'tt-sponsorblock-settings',
-            menuHeader: {
-                title: 'SponsorBlock Settings',
-                subtitle: 'https://sponsor.ajay.app/'
-            },
-            options: [
-                {
-                    name: 'Enable SponsorBlock',
-                    icon: 'MONEY_HAND',
-                    value: 'enableSponsorBlock'
-                },
-                {
-                    name: 'Manual SponsorBlock Segment Skip',
-                    icon: 'DOLLAR_SIGN',
-                    value: null,
-                    arrayToEdit: 'sponsorBlockManualSkips',
-                    menuId: 'tt-sponsorblock-manual-segment-skip',
-                    options: [
-                        {
-                            name: 'Skip Sponsor Segments',
-                            icon: 'MONEY_HEART',
-                            value: 'sponsor'
-                        },
-                        {
-                            name: 'Skip Intro Segments',
-                            icon: 'PLAY_CIRCLE',
-                            value: 'intro'
-                        },
-                        {
-                            name: 'Skip Outro Segments',
-                            value: 'outro'
-                        },
-                        {
-                            name: 'Skip Interaction Reminder Segments',
-                            value: 'interaction'
-                        },
-                        {
-                            name: 'Skip Self-Promotion Segments',
-                            value: 'selfpromo'
-                        },
-                        {
-                            name: 'Skip Preview/Recap Segments',
-                            value: 'preview'
-                        },
-                        {
-                            name: 'Skip Tangents/Jokes Segments',
-                            value: 'filler'
-                        },
-                        {
-                            name: 'Skip Off-Topic Music Segments',
-                            value: 'music_offtopic'
-                        }
-                    ]
-                },
-                {
-                    name: 'Segments',
-                    icon: 'SETTINGS',
-                    value: null,
-                    menuId: 'tt-sponsorblock-segments',
-                    options: [
-                        {
-                            name: 'Skip Sponsor Segments',
-                            icon: 'MONEY_HEART',
-                            value: 'enableSponsorBlockSponsor'
-                        },
-                        {
-                            name: 'Skip Intro Segments',
-                            icon: 'PLAY_CIRCLE',
-                            value: 'enableSponsorBlockIntro'
-                        },
-                        {
-                            name: 'Skip Outro Segments',
-                            value: 'enableSponsorBlockOutro'
-                        },
-                        {
-                            name: 'Skip Interaction Reminder Segments',
-                            value: 'enableSponsorBlockInteraction'
-                        },
-                        {
-                            name: 'Skip Self-Promotion Segments',
-                            value: 'enableSponsorBlockSelfPromo'
-                        },
-                        {
-                            name: 'Skip Preview/Recap Segments',
-                            value: 'enableSponsorBlockPreview'
-                        },
-                        {
-                            name: 'Skip Tangents/Jokes Segments',
-                            value: 'enableSponsorBlockFiller'
-                        },
-                        {
-                            name: 'Skip Off-Topic Music Segments',
-                            value: 'enableSponsorBlockMusicOfftopic'
-                        },
-                        {
-                            name: 'Highlights',
-                            icon: 'LOCATION_POINT',
-                            value: 'enableSponsorBlockHighlight'
-                        }
-                    ]
-                }
-            ]
-        },
-        {
-            name: 'DeArrow',
-            icon: 'VISIBILITY_OFF',
-            value: null,
-            menuHeader: {
-                title: 'DeArrow Settings',
-                subtitle: 'https://dearrow.ajay.app/'
-            },
-            options: [
-                {
-                    name: 'Enable DeArrow',
-                    icon: 'VISIBILITY_OFF',
-                    value: 'enableDeArrow'
-                },
-                {
-                    name: 'DeArrow Thumbnails',
-                    icon: 'TV',
-                    value: 'enableDeArrowThumbnails'
-                }
-            ]
-        },
-        {
             name: 'Miscellaneous',
             icon: 'SETTINGS',
             value: null,
             options: [
-                {
-                    name: 'Hide End Screen Cards',
-                    icon: 'VISIBILITY_OFF',
-                    value: 'enableHideEndScreenCards'
-                },
-                {
-                    name: 'You There Renderer',
-                    icon: 'HELP',
-                    value: 'enableYouThereRenderer'
-                },
-                {
-                    name: 'Paid Promotion Overlay',
-                    icon: 'MONEY_HAND',
-                    value: 'enablePaidPromotionOverlay'
-                },
                 {
                     name: "Who's Watching Menu",
                     icon: 'ACCOUNT_CIRCLE',
@@ -241,31 +98,9 @@ export default function modernUI(update, parameters) {
                     value: 'enableFixedUI'
                 },
                 {
-                    name: 'High Quality Thumbnails',
-                    icon: 'VIDEO_QUALITY',
-                    value: 'enableHqThumbnails'
-                },
-                /*{
-                    name: 'Chapters',
-                    icon: 'BOOKMARK_BORDER',
-                    value: 'enableChapters'
-                },*/
-                {
-                    name: 'Long Press',
-                    value: 'enableLongPress'
-                },
-                {
                     name: 'Shorts',
                     icon: 'YOUTUBE_SHORTS_FILL_24',
                     value: 'enableShorts'
-                },
-                {
-                    name: 'Video Previews',
-                    value: 'enablePreviews'
-                },
-                {
-                    name: 'Welcome Message',
-                    value: 'showWelcomeToast',
                 }
             ]
         },
@@ -322,25 +157,6 @@ export default function modernUI(update, parameters) {
                     ]
                 },
                 {
-                    name: 'Preferred Video Quality',
-                    icon: 'VIDEO_QUALITY',
-                    value: null,
-                    menuId: 'tt-preferred-video-quality',
-                    menuHeader: {
-                        title: 'Preferred Video Quality',
-                        subtitle: 'Choose the preferred or next best video quality applied when playback starts'
-                    },
-                    options:
-                        ['Auto', '2160p', '1440p', '1080p', '720p', '480p', '360p', '240p', '144p'].map((quality) => {
-                            return {
-                                name: quality,
-                                key: 'preferredVideoQuality',
-                                value: quality.toLowerCase()
-                            }
-                        })
-
-                },
-                {
                     name: 'Speed Settings Increments',
                     icon: 'SLOW_MOTION_VIDEO',
                     value: null,
@@ -354,23 +170,6 @@ export default function modernUI(update, parameters) {
                             name: `${increment}x`,
                             key: 'speedSettingsIncrement',
                             value: increment
-                        }
-                    })
-                },
-                {
-                    name: 'Preferred Video Codec',
-                    icon: 'VIDEO_QUALITY',
-                    value: null,
-                    menuId: 'tt-preferred-video-codec',
-                    menuHeader: {
-                        title: 'Preferred Video Codec',
-                        subtitle: 'Choose the preferred video codec for playback',
-                    },
-                    options: ['any', 'vp9', 'av01', 'avc1'].map((codec) => {
-                        return {
-                            name: codec === 'any' ? 'Any' : codec.toUpperCase(),
-                            key: 'preferredVideoCodec',
-                            value: codec
                         }
                     })
                 }
