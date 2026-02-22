@@ -64,18 +64,6 @@ function getVideoKey(item) {
   return `${id || 'unknown'}|${title}`;
 }
 
-function shouldHideWatchedForPage(configPages, page) {
-  if (!Array.isArray(configPages) || configPages.length === 0) return true;
-  if (configPages.includes(page)) return true;
-
-  // Library playlist overview / watch-next should follow library watched-filter setting.
-  if (configPages.includes('library') && (page === 'playlist' || page === 'watch')) {
-    return true;
-  }
-
-  return false;
-}
-
 function directFilterArray(arr, page, context = '') {
   if (!Array.isArray(arr) || arr.length === 0) return arr;
   
@@ -115,7 +103,7 @@ function directFilterArray(arr, page, context = '') {
   const threshold = Number(configRead('hideWatchedVideosThreshold') || 0);
   
   // Check if we should filter watched videos on this page (EXACT match)
-  const shouldHideWatched = hideWatchedEnabled && shouldHideWatchedForPage(configPages, page);
+  const shouldHideWatched = hideWatchedEnabled;
   
   // Shorts filtering is INDEPENDENT - always check if shorts are disabled
   const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
@@ -736,7 +724,7 @@ JSON.parse = function () {
   
   // UNIVERSAL FALLBACK - Filter EVERYTHING if we're on a critical page
   const currentPage = getCurrentPage();
-  const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel'];
+  const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel', 'watch'];
   //const criticalPages = ['subscriptions', 'library', 'history', 'channel'];
 
   if (criticalPages.includes(currentPage) && !r.__universalFilterApplied) {
@@ -819,7 +807,7 @@ function processShelves(shelves) {
   const horizontalShelves = shelves.filter((shelve) => shelve?.shelfRenderer?.content?.horizontalListRenderer?.items);
   const hideWatchedEnabled = configRead('enableHideWatchedVideos');
   const configPages = configRead('hideWatchedVideosPages') || [];
-  const shouldHideWatched = hideWatchedEnabled && shouldHideWatchedForPage(configPages, page);
+  const shouldHideWatched = hideWatchedEnabled;
   
   if (DEBUG_ENABLED) {
     console.log('[SHELF] Page:', page, '| Shelves:', shelves.length, '| Hide watched:', shouldHideWatched, '| Shorts:', shortsEnabled);
@@ -853,7 +841,7 @@ function processShelves(shelves) {
     try {
       const shelve = shelves[i];
       if (!shelve) continue;
-      
+
       let shelfType = 'unknown';
       let itemsBefore = 0;
       let itemsAfter = 0;
