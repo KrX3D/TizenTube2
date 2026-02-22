@@ -1,7 +1,7 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
-import { shouldFilterShorts, filterShortItems } from './shortsCore.js';
+import { isShortItem, shouldFilterShorts } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -187,7 +187,7 @@ function directFilterArray(arr, page, context = '') {
     }
     
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
-    if (shouldApplyShortsFilter) {
+    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
       shortsCount++;
       
       // ⭐ ADD VISUAL MARKER
@@ -835,13 +835,6 @@ function processShelves(shelves) {
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
           
-          // ⭐ SHORTS FILTERING
-          if (!shortsEnabled) {
-            const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-            items = shortResult.items;
-            totalShortsRemoved += shortResult.removed;
-          }
-          
           // ⭐ WATCHED FILTERING (always runs, independent of shorts)
           const beforeHide = items.length;
           if (shouldHideWatched) {
@@ -873,11 +866,6 @@ function processShelves(shelves) {
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
           
-          if (!shortsEnabled) {
-            const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-            items = shortResult.items;
-            totalShortsRemoved += shortResult.removed;
-          }
           
           const beforeHide = items.length;
           if (shouldHideWatched) {
@@ -908,12 +896,6 @@ function processShelves(shelves) {
           let items = shelve.shelfRenderer.content.verticalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           itemsBefore = items.length;
-          
-          if (!shortsEnabled) {
-            const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-            items = shortResult.items;
-            totalShortsRemoved += shortResult.removed;
-          }
           
           const beforeHide = items.length;
           if (shouldHideWatched) {
@@ -946,11 +928,6 @@ function processShelves(shelves) {
         const originalContents = Array.isArray(contents) ? contents.slice() : [];
         itemsBefore = contents.length;
         
-        if (!shortsEnabled) {
-          const shortResult = filterShortItems(contents, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-          contents = shortResult.items;
-          totalShortsRemoved += shortResult.removed;
-        }
         
         const beforeHide = contents.length;
         if (shouldHideWatched) {
@@ -982,8 +959,7 @@ function processShelves(shelves) {
         if (!shortsEnabled) {
           const innerShelf = shelve.richSectionRenderer.content.richShelfRenderer;
           const contents = innerShelf?.content?.richGridRenderer?.contents;
-          const shortResult = filterShortItems(contents, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-          if (shortResult.removed > 0) {
+          if (contents.length === 0) {
             if (DEBUG_ENABLED && LOG_SHORTS) {
               console.log('[SHELF_PROCESS] Removing shorts richSection shelf');
             }
@@ -1001,11 +977,6 @@ function processShelves(shelves) {
         const originalItems = Array.isArray(items) ? items.slice() : [];
         itemsBefore = items.length;
         
-        if (!shortsEnabled) {
-          const shortResult = filterShortItems(items, { page, debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS });
-          items = shortResult.items;
-          totalShortsRemoved += shortResult.removed;
-        }
         
         const beforeHide = items.length;
         if (shouldHideWatched) {

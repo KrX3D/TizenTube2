@@ -1,4 +1,4 @@
-// If removed, breaks playlist filtering, subscription and channel watched viltering and shorts removal + watch page removal
+// KrX If removed, breaks playlist filtering, subscription and channel watched viltering and shorts removal + watch page removal
 export function shouldFilterShorts(shortsEnabled, page) {
   return !shortsEnabled && page !== 'playlist' && page !== 'playlists';
 }
@@ -10,6 +10,7 @@ export function filterShortItems(items, { page, debugEnabled = false, logShorts 
   return { items: filtered, removed: items.length - filtered.length };
 }
 
+//KrX if removed breaks suscription, library all videos ar removed and hsorts on home page only 3 shelfs remain, so filters everything
 export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
   if (!item) return false;
 
