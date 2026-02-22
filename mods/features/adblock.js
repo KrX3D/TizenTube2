@@ -104,8 +104,11 @@ function directFilterArray(arr, page, context = '') {
   // Check if we should filter watched videos on this page (EXACT match)
   const shouldHideWatched = hideWatchedEnabled;
   
+  // Shorts filtering is INDEPENDENT - always check if shorts are disabled
+  const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
+  
   // Skip if nothing to do
-  if (!!shouldHideWatched) {
+  if (!shouldApplyShortsFilter && !shouldHideWatched) {
     return arr;
   }
   
@@ -149,7 +152,7 @@ function directFilterArray(arr, page, context = '') {
   }
   
   // ⭐ DEBUG: Log configuration
-  if (DEBUG_ENABLED && shouldHideWatched) {
+  if (DEBUG_ENABLED && (shouldApplyShortsFilter || shouldHideWatched)) {
     console.log('[FILTER_START #' + callId + '] ========================================');
     console.log('[FILTER_START #' + callId + '] Context:', context);
     console.log('[FILTER_START #' + callId + '] Page:', page);
@@ -157,6 +160,7 @@ function directFilterArray(arr, page, context = '') {
     console.log('[FILTER_START #' + callId + '] Total items:', arr.length);
     console.log('[FILTER_CONFIG #' + callId + '] Threshold:', threshold + '%');
     console.log('[FILTER_CONFIG #' + callId + '] Hide watched:', shouldHideWatched);
+    console.log('[FILTER_CONFIG #' + callId + '] Filter shorts:', shouldApplyShortsFilter);
   }
   
   let hiddenCount = 0;
@@ -183,7 +187,7 @@ function directFilterArray(arr, page, context = '') {
     }
     
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
-    if (isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
       shortsCount++;
       
       // ⭐ ADD VISUAL MARKER

@@ -1,4 +1,9 @@
 
+export function shouldFilterShorts(shortsEnabled, page) {
+  return !shortsEnabled && page !== 'playlist' && page !== 'playlists';
+}
+
+
 export function filterShortItems(items, { page, debugEnabled = false, logShorts = false } = {}) {
   if (!Array.isArray(items)) return { items: [], removed: 0 };
   const filtered = items.filter((item) => !isShortItem(item, { debugEnabled, logShorts, currentPage: page || 'other' }));
