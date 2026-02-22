@@ -1,12 +1,3 @@
-export function initShortsTrackingState() {
-  window._shortsVideoIdsFromShelves = window._shortsVideoIdsFromShelves || new Set();
-  window._shortsTitlesFromShelves = window._shortsTitlesFromShelves || new Set();
-}
-
-export function shouldFilterShorts(shortsEnabled, page) {
-  return !shortsEnabled && page !== 'playlist' && page !== 'playlists';
-}
-
 
 export function filterShortItems(items, { page, debugEnabled = false, logShorts = false } = {}) {
   if (!Array.isArray(items)) return { items: [], removed: 0 };

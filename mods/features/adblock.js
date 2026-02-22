@@ -1,7 +1,7 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
-import { isShortItem, initShortsTrackingState, shouldFilterShorts, filterShortItems } from './shortsCore.js';
+import { isShortItem, shouldFilterShorts, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -104,11 +104,8 @@ function directFilterArray(arr, page, context = '') {
   // Check if we should filter watched videos on this page (EXACT match)
   const shouldHideWatched = hideWatchedEnabled;
   
-  // Shorts filtering is INDEPENDENT - always check if shorts are disabled
-  const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
-  
   // Skip if nothing to do
-  if (!shouldApplyShortsFilter && !shouldHideWatched) {
+  if (!!shouldHideWatched) {
     return arr;
   }
   
@@ -152,7 +149,7 @@ function directFilterArray(arr, page, context = '') {
   }
   
   // ⭐ DEBUG: Log configuration
-  if (DEBUG_ENABLED && (shouldApplyShortsFilter || shouldHideWatched)) {
+  if (DEBUG_ENABLED && shouldHideWatched) {
     console.log('[FILTER_START #' + callId + '] ========================================');
     console.log('[FILTER_START #' + callId + '] Context:', context);
     console.log('[FILTER_START #' + callId + '] Page:', page);
@@ -160,7 +157,6 @@ function directFilterArray(arr, page, context = '') {
     console.log('[FILTER_START #' + callId + '] Total items:', arr.length);
     console.log('[FILTER_CONFIG #' + callId + '] Threshold:', threshold + '%');
     console.log('[FILTER_CONFIG #' + callId + '] Hide watched:', shouldHideWatched);
-    console.log('[FILTER_CONFIG #' + callId + '] Filter shorts:', shouldApplyShortsFilter);
   }
   
   let hiddenCount = 0;
@@ -187,7 +183,7 @@ function directFilterArray(arr, page, context = '') {
     }
     
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
-    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+    if (isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
       shortsCount++;
       
       // ⭐ ADD VISUAL MARKER
@@ -287,7 +283,6 @@ function directFilterArray(arr, page, context = '') {
 
 function scanAndFilterAllArrays(obj, page, path = 'root') {
   if (!obj || typeof obj !== 'object') return;
-  initShortsTrackingState();
   
   // If this is an array with video items, filter it
   if (Array.isArray(obj) && obj.length > 0) {
@@ -782,8 +777,6 @@ function processShelves(shelves) {
     console.warn('[SHELF_PROCESS] processShelves called with non-array', { type: typeof shelves });
     return;
   }
-
-  initShortsTrackingState();
   
   const page = getCurrentPage();
   const shortsEnabled = configRead('enableShorts');
