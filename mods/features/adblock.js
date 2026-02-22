@@ -127,26 +127,6 @@ function getVideoKey(item) {
   return `${id || 'unknown'}|${title}`;
 }
 
-function trackRemovedPlaylistHelperKeys(helperVideos) {
-  window._playlistRemovedHelperKeys = window._playlistRemovedHelperKeys || new Set();
-  window._playlistRemovedHelperKeyQueue = window._playlistRemovedHelperKeyQueue || [];
-
-  helperVideos.forEach((video) => {
-    const key = getVideoKey(video);
-    if (!key || key === 'unknown|') return;
-    if (!window._playlistRemovedHelperKeys.has(key)) {
-      window._playlistRemovedHelperKeys.add(key);
-      window._playlistRemovedHelperKeyQueue.push(key);
-    }
-  });
-
-  const MAX_KEYS = 40;
-  while (window._playlistRemovedHelperKeyQueue.length > MAX_KEYS) {
-    const oldest = window._playlistRemovedHelperKeyQueue.shift();
-    window._playlistRemovedHelperKeys.delete(oldest);
-  }
-}
-
 function shouldHideWatchedForPage(configPages, page) {
   if (!Array.isArray(configPages) || configPages.length === 0) return true;
   if (configPages.includes(page)) return true;
@@ -251,31 +231,7 @@ function directFilterArray(arr, page, context = '') {
   // ⭐ FIXED: Trigger cleanup when we have stored helpers AND this is a new batch with content
   if (isPlaylistPage && window._lastHelperVideos.length > 0 && arr.length > 0) {
     console.log('[CLEANUP_TRIGGER] New batch detected! Stored helpers:', window._lastHelperVideos.length, '| new videos:', arr.length);
-    
-    // Store the helper IDs for filtering
-    const helperIdsToRemove = window._lastHelperVideos.map(video => 
-      video.tileRenderer?.contentId || 
-      video.videoRenderer?.videoId || 
-      video.playlistVideoRenderer?.videoId ||
-      video.gridVideoRenderer?.videoId ||
-      video.compactVideoRenderer?.videoId ||
-      'unknown'
-    );
-    
-    console.log('[CLEANUP] Helper IDs to remove:', helperIdsToRemove);
-    
-    // ⭐ DON'T insert helpers into new batch - they're already rendered!
-    // Just track them for removal if they appear
-    trackRemovedPlaylistHelperKeys(window._lastHelperVideos);
-    
-    // Clear helpers immediately (don't wait for last batch)
-    if (!isLastBatch) {
-      window._lastHelperVideos = [];
-      window._playlistScrollHelpers.clear();
-      console.log('[CLEANUP] Helpers cleared');
-    }
-  }
-  
+      
   // ⭐ DEBUG: Log configuration
   if (DEBUG_ENABLED && (shouldApplyShortsFilter || shouldHideWatched)) {
     console.log('[FILTER_START #' + callId + '] ========================================');
@@ -439,19 +395,6 @@ function directFilterArray(arr, page, context = '') {
     });
     
     console.log('[COLLECTION] 🔄 Batch complete. Total unwatched collected:', window._collectedUnwatched.length);
-  }
-  
-  // ⭐ If we found unwatched videos, clear stored helpers (we don't need them anymore)
-  if (isPlaylistPage && filtered.length > 0 && noProgressBarCount > 0) {
-    if (window._lastHelperVideos && window._lastHelperVideos.length > 0) {
-      if (DEBUG_ENABLED) {
-        console.log('[CLEANUP] Found', noProgressBarCount, 'unwatched - clearing', window._lastHelperVideos.length, 'stored helper(s)');
-      }
-      const helperIdsToTrack = window._lastHelperVideos.map((video) => getVideoId(video)).filter(Boolean);
-      trackRemovedPlaylistHelperKeys(window._lastHelperVideos);
-      window._lastHelperVideos = [];
-      window._playlistScrollHelpers.clear();
-    }
   }
   
   // ⭐ Clean up after filtering if last batch
