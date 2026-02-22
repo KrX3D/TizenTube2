@@ -491,103 +491,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
   }
 }
 
-// ⭐ AUTO-LOAD STATE: Must be outside JSON.parse to persist across responses
-let autoLoadInProgress = false;
-let autoLoadAttempts = 0;
-const MAX_AUTO_LOAD_ATTEMPTS = 100;
-let skipUniversalFilter = false;  // ⭐ NEW: Global flag to skip filtering during auto-load
-
-// ⭐ AUTO-LOADER FUNCTION: Must be in global scope so setTimeout can access it
-function startPlaylistAutoLoad() {
-  console.log('▶▶▶▶▶▶▶▶▶▶ AUTO-LOAD CALLED ◀◀◀◀◀◀◀◀◀◀');
-  const currentPage = getCurrentPage();
-  console.log('▶▶▶ Current page:', currentPage);
-  console.log('▶▶▶ autoLoadInProgress:', autoLoadInProgress);
-
-  // Playlist-only flow: if navigation changed while deferred callbacks are pending,
-  // ensure we fully reset and skip auto-loader work.
-  if (currentPage !== 'playlist' && currentPage !== 'playlists') {
-    autoLoadInProgress = false;
-    skipUniversalFilter = false;
-    if (DEBUG_ENABLED) {
-      console.log('[PLAYLIST_AUTOLOAD] Aborting: page is no longer a playlist');
-    }
-    return;
-  }
-  
-  if (autoLoadInProgress) {
-    if (DEBUG_ENABLED) {
-      console.log('[PLAYLIST_AUTOLOAD] Already in progress, skipping');
-    }
-    return;
-  }
-  
-  autoLoadInProgress = true;
-  autoLoadAttempts = 0;
-  skipUniversalFilter = true;  // ⭐ ADD THIS - prevents filtering during auto-load
-  
-  if (DEBUG_ENABLED) {
-    console.log('[PLAYLIST_AUTOLOAD] ========================================');
-    console.log('[PLAYLIST_AUTOLOAD] Starting auto-load process');
-    console.log('[PLAYLIST_AUTOLOAD] ========================================');
-  }
-  
-  let lastVideoCount = 0;
-  let stableCount = 0;
-  
-  const autoLoadInterval = setInterval(() => {
-    autoLoadAttempts++;
-    
-    // Safety: Stop after too many attempts
-    if (autoLoadAttempts > MAX_AUTO_LOAD_ATTEMPTS) {
-      if (DEBUG_ENABLED) {
-        console.log('[PLAYLIST_AUTOLOAD] Max attempts reached, stopping');
-      }
-      clearInterval(autoLoadInterval);
-      autoLoadInProgress = false;
-      skipUniversalFilter = false;
-      return;
-    }
-    
-    // Count current videos
-    const videoElements = document.querySelectorAll('ytlr-tile-renderer');
-    const currentCount = videoElements.length;
-    
-    if (DEBUG_ENABLED && autoLoadAttempts % 5 === 0) {
-      console.log(`[PLAYLIST_AUTOLOAD] Attempt ${autoLoadAttempts}: ${currentCount} videos loaded`);
-    }
-    
-    // Scroll to bottom to trigger loading
-    window.scrollTo(0, document.body.scrollHeight);
-    
-    // Check if video count has stabilized (no new videos loading)
-    if (currentCount === lastVideoCount) {
-      stableCount++;
-      
-      // If count stable for 3 checks, we're done
-      if (stableCount >= 3) {
-        if (DEBUG_ENABLED) {
-          console.log('[PLAYLIST_AUTOLOAD] ========================================');
-          console.log('[PLAYLIST_AUTOLOAD] All videos loaded!');
-          console.log('[PLAYLIST_AUTOLOAD] Total videos:', currentCount);
-          console.log('[PLAYLIST_AUTOLOAD] Now applying filters...');
-          console.log('[PLAYLIST_AUTOLOAD] ========================================');
-        }
-        
-        clearInterval(autoLoadInterval);
-        autoLoadInProgress = false;
-        skipUniversalFilter = false;  // ⭐ ADD THIS - re-enable filtering
-        
-        // Scroll back to top
-        window.scrollTo(0, 0);
-      }
-    } else {
-      stableCount = 0;
-      lastVideoCount = currentCount;
-    }
-  }, 500);
-}
-
 // ⭐ PLAYLIST COLLECTION MODE: Store unwatched videos, then reload filtered
 const PLAYLIST_STORAGE_KEY = 'tizentube_playlist_unwatched';
 
@@ -625,28 +528,6 @@ JSON.parse = function () {
     // ONLY process once per unique response object
     if (!r.__tizentubeProcessedBrowse) {
       r.__tizentubeProcessedBrowse = true;
-      
-      // ⭐ CHECK IF THIS IS A PLAYLIST PAGE
-      if (currentPage === 'playlist' || currentPage === 'playlists') {
-        r.__universalFilterApplied = true;  // Prevent universal filter
-        
-        if (DEBUG_ENABLED) {
-          console.log('[TVBROWSE_PLAYLIST] ========================================');
-          console.log('[TVBROWSE_PLAYLIST] Playlist detected in tvBrowseRenderer!');
-          console.log('[TVBROWSE_PLAYLIST] Page:', currentPage);
-          console.log('[TVBROWSE_PLAYLIST] Starting auto-load process...');
-          console.log('[TVBROWSE_PLAYLIST] ========================================');
-        }
-        
-        // Start auto-loader
-        setTimeout(() => {
-          console.log('[DEBUG_TVBROWSE] setTimeout fired! Starting auto-load...');
-          startPlaylistAutoLoad();
-        }, 1000);
-        
-        // Skip all processing for playlists - auto-loader handles it
-        return r;
-      }
       
       // ⭐ NON-PLAYLIST PAGES: Normal processing
       if (DEBUG_ENABLED) {
@@ -921,40 +802,6 @@ JSON.parse = function () {
     }
   }
   
-  // Handle twoColumnBrowseResultsRenderer (playlist pages like WL, LL)
-  if (r?.contents?.twoColumnBrowseResultsRenderer?.tabs) {
-    const page = getCurrentPage();
-    
-    if (!r.__tizentubeProcessedPlaylist) {
-      r.__tizentubeProcessedPlaylist = true;
-      r.__universalFilterApplied = true;  // ⭐ ADD THIS LINE - prevents universal filter from running
-      
-      if (DEBUG_ENABLED) {
-        console.log('[PLAYLIST_PAGE] ========================================');
-        console.log('[PLAYLIST_PAGE] Initial playlist load detected');
-        console.log('[PLAYLIST_PAGE] Page:', page);
-        console.log('[PLAYLIST_PAGE] Starting auto-load process...');
-        console.log('[PLAYLIST_PAGE] ========================================');
-      }
-      
-      // ⭐ SKIP FILTERING - Let initial videos through
-      // Auto-loader will handle filtering after all videos load
-      
-      // ⭐ Trigger auto-load after a short delay (let UI render first)
-      setTimeout(() => {
-        console.log('[DEBUG] setTimeout fired! page:', page);  // ⭐ DEBUG
-        console.log('[DEBUG] getCurrentPage():', getCurrentPage());  // ⭐ DEBUG
-        if (page === 'playlist' || page === 'playlists') {
-          console.log('[DEBUG] About to call startPlaylistAutoLoad()');  // ⭐ DEBUG
-          startPlaylistAutoLoad();
-          console.log('[DEBUG] startPlaylistAutoLoad() called');  // ⭐ DEBUG
-        } else {
-          console.log('[DEBUG] NOT calling startPlaylistAutoLoad, page is:', page);  // ⭐ DEBUG
-        }
-      }, 1000);
-    }
-  }
-
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
     const page = getCurrentPage();
@@ -983,7 +830,7 @@ JSON.parse = function () {
   const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel'];
   //const criticalPages = ['subscriptions', 'library', 'history', 'channel'];
 
-  if (criticalPages.includes(currentPage) && !r.__universalFilterApplied && !skipUniversalFilter) {
+  if (criticalPages.includes(currentPage) && !r.__universalFilterApplied) {
     r.__universalFilterApplied = true;
     
     //if (DEBUG_ENABLED) {
