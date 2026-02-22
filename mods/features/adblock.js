@@ -215,7 +215,6 @@ function directFilterArray(arr, page, context = '') {
     console.log('>>>>>> Array length:', arr.length);
     console.log('>>>>>> Context:', context);
     console.log('>>>>>> Last batch flag:', window._isLastPlaylistBatch);
-    console.log('>>>>>> Collection mode:', isInCollectionMode());
   }
 
   // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
@@ -373,24 +372,6 @@ function directFilterArray(arr, page, context = '') {
     window._playlistScrollHelpers.clear();
     window._playlistScrollHelpers.add(lastVideoId);
     return [lastVideo];
-  }
-  
-  // ⭐ COLLECTION MODE: Track unwatched videos
-  if (isPlaylistPage && isInCollectionMode()) {
-    // Collect all unwatched video IDs from this batch
-    filtered.forEach(item => {
-      const videoId = item.tileRenderer?.contentId || 
-                     item.videoRenderer?.videoId || 
-                     item.playlistVideoRenderer?.videoId ||
-                     item.gridVideoRenderer?.videoId ||
-                     item.compactVideoRenderer?.videoId;
-      
-      if (videoId && !window._collectedUnwatched.includes(videoId)) {
-        window._collectedUnwatched.push(videoId);
-      }
-    });
-    
-    console.log('[COLLECTION] 🔄 Batch complete. Total unwatched collected:', window._collectedUnwatched.length);
   }
   
   // ⭐ Clean up after filtering if last batch
@@ -610,23 +591,6 @@ function startPlaylistAutoLoad() {
 // ⭐ PLAYLIST COLLECTION MODE: Store unwatched videos, then reload filtered
 const PLAYLIST_STORAGE_KEY = 'tizentube_playlist_unwatched';
 
-function isInCollectionMode() {
-  const stored = localStorage.getItem(PLAYLIST_STORAGE_KEY);
-  if (!stored) return false;
-  
-  try {
-    const data = JSON.parse(stored);
-    // Collection mode expires after 5 minutes
-    if (Date.now() - data.timestamp > 5 * 60 * 1000) {
-      localStorage.removeItem(PLAYLIST_STORAGE_KEY);
-      return false;
-    }
-    return data.mode === 'collecting';
-  } catch {
-    return false;
-  }
-}
-
 function getFilteredVideoIds() {
   const stored = localStorage.getItem(PLAYLIST_STORAGE_KEY);
   if (!stored) return null;
@@ -642,38 +606,6 @@ function getFilteredVideoIds() {
     }
   } catch {}
   return null;
-}
-
-function startCollectionMode() {
-  console.log('🔄🔄🔄 STARTING COLLECTION MODE');
-  localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify({
-    mode: 'collecting',
-    timestamp: Date.now(),
-    videoIds: []
-  }));
-  
-  // Reload page to start fresh
-  window.location.reload();
-}
-
-function finishCollectionAndFilter(unwatchedIds) {
-  console.log('🔄🔄🔄 COLLECTION COMPLETE - Switching to filter mode');
-  console.log('🔄 Total unwatched videos:', unwatchedIds.length);
-  
-  localStorage.setItem(PLAYLIST_STORAGE_KEY, JSON.stringify({
-    mode: 'filtering',
-    timestamp: Date.now(),
-    videoIds: unwatchedIds
-  }));
-  
-  // Reload page in filter mode
-  window.location.reload();
-}
-
-function exitFilterMode() {
-  console.log('🔄🔄🔄 EXITING FILTER MODE');
-  localStorage.removeItem(PLAYLIST_STORAGE_KEY);
-  window.location.reload();
 }
 
 // ⭐ Track collected unwatched videos during collection mode
@@ -799,18 +731,6 @@ JSON.parse = function () {
       console.log('═══ ⭐⭐⭐ THIS IS THE LAST BATCH! ⭐⭐⭐');
       // Set flag for directFilterArray to read
       window._isLastPlaylistBatch = true;
-
-      // ⭐ CHECK: Are we in collection mode?
-      if (isInCollectionMode()) {
-        console.log('═══ 🔄 COLLECTION MODE: Last batch reached!');
-        console.log('═══ 🔄 Total unwatched videos collected:', window._collectedUnwatched.length);
-
-        // Switch to filter mode after a delay (let current batch render)
-        setTimeout(() => {
-          finishCollectionAndFilter(window._collectedUnwatched);
-        }, 2000);
-      }
-      
     } else {
       console.log('═══ More batches to come...');
       window._isLastPlaylistBatch = false;
