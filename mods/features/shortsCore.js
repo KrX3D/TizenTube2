@@ -14,18 +14,6 @@ export function filterShortItems(items, { page, debugEnabled = false, logShorts 
 export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
   if (!item) return false;
 
-  const videoId = item.tileRenderer?.contentId ||
-    item.videoRenderer?.videoId ||
-    item.gridVideoRenderer?.videoId ||
-    item.compactVideoRenderer?.videoId ||
-    'unknown';
-
-  const page = currentPage || 'other';
-
-  if ((page === 'subscriptions' || String(page).includes('channel')) && debugEnabled && logShorts) {
-    console.log('[SHORTS_DIAGNOSTIC] checking', videoId);
-  }
-
   if (item.tileRenderer?.contentType === 'TILE_CONTENT_TYPE_SHORT') return true;
 
   if (item.videoRenderer) {
@@ -102,17 +90,11 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
         const seconds = parseInt(durationMatch[2], 10);
         const totalSeconds = minutes * 60 + seconds;
         if (totalSeconds <= 90) {
-          if (debugEnabled && logShorts) {
-            console.log('[SHORTS] Detected by duration (≤ 90s):', videoId, '| Duration:', totalSeconds + 's');
-          }
           return true;
         }
         
         // Extended check for 90-180 seconds Shorts can be nowt till 3min
         if (totalSeconds <= 180) {
-          if (debugEnabled && logShorts) {
-            console.log('[SHORTS] Detected by duration + shelf memory:', videoId, '| Duration:', totalSeconds + 's');
-          }
           return true;
         }
       }
@@ -124,10 +106,6 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
   if (item.tileRenderer?.header?.tileHeaderRenderer?.thumbnail?.thumbnails) {
     const thumb = item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails[0];
     if (thumb && thumb.height > thumb.width) return true;
-  }
-
-  if (debugEnabled && logShorts) {
-    console.log('[SHORTS_DIAGNOSTIC] not short', videoId);
   }
   return false;
 }

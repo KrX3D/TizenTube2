@@ -42,18 +42,6 @@ function getVideoId(item) {
     null;
 }
 
-function getVideoTitle(item) {
-  return (
-    item?.tileRenderer?.metadata?.tileMetadataRenderer?.title?.simpleText ||
-    item?.videoRenderer?.title?.runs?.[0]?.text ||
-    item?.playlistVideoRenderer?.title?.runs?.[0]?.text ||
-    item?.gridVideoRenderer?.title?.runs?.[0]?.text ||
-    item?.compactVideoRenderer?.title?.simpleText ||
-    item?.richItemRenderer?.content?.videoRenderer?.title?.runs?.[0]?.text ||
-    ''
-  );
-}
-
 function getVideoKey(item) {
   const id = getVideoId(item);
   const title = item?.tileRenderer?.metadata?.tileMetadataRenderer?.title?.simpleText ||
