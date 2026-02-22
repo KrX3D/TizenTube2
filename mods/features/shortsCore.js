@@ -12,58 +12,12 @@ export function isShortsShelfTitle(title = '') {
   return t.includes('shorts') || t.includes('short');
 }
 
-export function rememberShortsFromShelf(shelf, collectVideoIdsFromShelf, getVideoTitle) {
-  initShortsTrackingState();
-  const ids = collectVideoIdsFromShelf(shelf);
-  ids.forEach((id) => window._shortsVideoIdsFromShelves.add(id));
-
-  const stack = [shelf];
-  while (stack.length) {
-    const node = stack.pop();
-    if (!node || typeof node !== 'object') continue;
-    if (Array.isArray(node)) {
-      node.forEach((entry) => stack.push(entry));
-      continue;
-    }
-    const title = getVideoTitle(node).trim().toLowerCase();
-    if (title) window._shortsTitlesFromShelves.add(title);
-    for (const key in node) {
-      if (Object.prototype.hasOwnProperty.call(node, key)) {
-        stack.push(node[key]);
-      }
-    }
-  }
-
-  return ids;
-}
-
 export function isKnownShortFromShelfMemory(item, getVideoId, getVideoTitle) {
   const id = getVideoId(item);
   if (id !== 'unknown' && window._shortsVideoIdsFromShelves?.has(id)) return true;
 
   const title = getVideoTitle(item).trim().toLowerCase();
   return !!title && !!window._shortsTitlesFromShelves?.has(title);
-}
-
-export function removeShortsShelvesByTitle(shelves, { page, shortsEnabled, collectVideoIdsFromShelf, getVideoTitle, debugEnabled = false, logShorts = false, path = '' } = {}) {
-  if (!Array.isArray(shelves) || shortsEnabled) return 0;
-  initShortsTrackingState();
-
-  let removed = 0;
-  for (let i = shelves.length - 1; i >= 0; i--) {
-    const shelf = shelves[i];
-    const title = getShelfTitle(shelf);
-    if (!isShortsShelfTitle(title)) continue;
-
-    const ids = rememberShortsFromShelf(shelf, collectVideoIdsFromShelf, getVideoTitle);
-    if (debugEnabled || logShorts) {
-      console.log('[SHORTS_SHELF] removed title=', title, '| ids=', ids.length, '| page=', page, '| path=', path || i);
-    }
-    shelves.splice(i, 1);
-    removed++;
-  }
-
-  return removed;
 }
 
 export function filterShortItems(items, { page, debugEnabled = false, logShorts = false } = {}) {

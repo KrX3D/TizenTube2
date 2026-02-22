@@ -2,7 +2,7 @@ import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
 import { applyAdCleanup, applyBrowseAdFiltering, applyShortsAdFiltering } from './adCleanup.js';
-import { isShortItem, initShortsTrackingState, shouldFilterShorts, isKnownShortFromShelfMemory, rememberShortsFromShelf, removeShortsShelvesByTitle, filterShortItems } from './shortsCore.js';
+import { isShortItem, initShortsTrackingState, shouldFilterShorts, isKnownShortFromShelfMemory, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -54,69 +54,6 @@ function getVideoTitle(item) {
     ''
   );
 }
-
-function collectVideoIdsFromShelf(shelf) {
-  const ids = [];
-  const seen = new Set();
-  const pushFrom = (arr) => {
-    if (!Array.isArray(arr)) return;
-    arr.forEach((item) => {
-      const id = getVideoId(item);
-      if (id && !seen.has(id)) {
-        seen.add(id);
-        ids.push(id);
-      }
-    });
-  };
-
-  pushFrom(shelf?.shelfRenderer?.content?.horizontalListRenderer?.items);
-  pushFrom(shelf?.shelfRenderer?.content?.gridRenderer?.items);
-  pushFrom(shelf?.shelfRenderer?.content?.verticalListRenderer?.items);
-  pushFrom(shelf?.richShelfRenderer?.content?.richGridRenderer?.contents);
-  pushFrom(shelf?.gridRenderer?.items);
-
-  // Fallback: recurse through shelf object to catch Tizen 5.5 variants where
-  // Shorts shelf videos are rendered in non-standard branches.
-  const stack = [shelf];
-  while (stack.length) {
-    const node = stack.pop();
-    if (!node || typeof node !== 'object') continue;
-    if (Array.isArray(node)) {
-      for (const entry of node) stack.push(entry);
-      continue;
-    }
-
-    const id = getVideoId(node);
-    if (id && !seen.has(id)) {
-      seen.add(id);
-      ids.push(id);
-    }
-
-    for (const key in node) {
-      if (Object.prototype.hasOwnProperty.call(node, key)) {
-        stack.push(node[key]);
-      }
-    }
-  }
-
-  return ids;
-}
-
-function isLikelyPlaylistHelperItem(item) {
-  if (!item || typeof item !== 'object') return false;
-  if (item.continuationItemRenderer) return true;
-  if (item?.tileRenderer?.onSelectCommand?.continuationCommand) return true;
-  if (item?.tileRenderer?.onSelectCommand?.continuationEndpoint) return true;
-  if (item?.continuationEndpoint || item?.continuationCommand) return true;
-
-  const videoId = getVideoId(item);
-  if (videoId) return false;
-
-  const textParts = getVideoTitle(item).toLowerCase();
-
-  return /scroll|weiter|weiteres|mehr|more|helper|continuation|fortsetzen|laden/.test(textParts);
-}
-
 
 function getVideoKey(item) {
   const id = getVideoId(item);
@@ -246,22 +183,7 @@ function directFilterArray(arr, page, context = '') {
   
   const filtered = arr.filter(item => {
     if (!item) return true;
-    
-    // Check if it's a video item
-    const isVideoItem = item.tileRenderer || 
-                        item.videoRenderer || 
-                        item.gridVideoRenderer ||
-                        item.compactVideoRenderer ||
-                        item.playlistVideoRenderer ||
-                        item.richItemRenderer?.content?.videoRenderer;
-    
-    if (!isVideoItem) {
-      if (isPlaylistPage && isLikelyPlaylistHelperItem(item)) {
-        return false;
-      }
-      return true;
-    }
-    
+
     const videoId = item.tileRenderer?.contentId || 
                    item.videoRenderer?.videoId || 
                    item.playlistVideoRenderer?.videoId ||
@@ -277,9 +199,6 @@ function directFilterArray(arr, page, context = '') {
     }
 
     const videoKey = getVideoKey(item);
-    if (isPlaylistPage && isLikelyPlaylistHelperItem(item)) {
-      return false;
-    }
     if (isPlaylistPage && (window._playlistRemovedHelpers.has(videoId) || window._playlistRemovedHelperKeys?.has(videoKey))) {
       if (DEBUG_ENABLED) {
         console.log('[HELPER_CLEANUP] Removing stale helper from data:', videoId, '| key=', videoKey);
@@ -418,16 +337,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     if (hasShelves) {
       const shortsEnabled = configRead('enableShorts');
 
-      removeShortsShelvesByTitle(obj, {
-        page,
-        shortsEnabled,
-        collectVideoIdsFromShelf,
-        getVideoTitle,
-        debugEnabled: DEBUG_ENABLED,
-        logShorts: LOG_SHORTS,
-        path
-      });
-      
       // Filter shelves recursively
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
@@ -908,9 +817,6 @@ function processShelves(shelves) {
   const page = getCurrentPage();
   const shortsEnabled = configRead('enableShorts');
   const horizontalShelves = shelves.filter((shelve) => shelve?.shelfRenderer?.content?.horizontalListRenderer?.items);
-  hideShorts(horizontalShelves, shortsEnabled, (removedShelf) => {
-    rememberShortsFromShelf(removedShelf, collectVideoIdsFromShelf, getVideoTitle);
-  });
   const hideWatchedEnabled = configRead('enableHideWatchedVideos');
   const configPages = configRead('hideWatchedVideosPages') || [];
   const shouldHideWatched = hideWatchedEnabled && shouldHideWatchedForPage(configPages, page);
@@ -947,23 +853,6 @@ function processShelves(shelves) {
     try {
       const shelve = shelves[i];
       if (!shelve) continue;
-      
-      // Shorts shelf removal by title moved to shortsCore.
-      if (!shortsEnabled) {
-        const removed = removeShortsShelvesByTitle(shelves, {
-          page,
-          shortsEnabled,
-          collectVideoIdsFromShelf,
-          getVideoTitle,
-          debugEnabled: DEBUG_ENABLED,
-          logShorts: LOG_SHORTS,
-          path: `processShelves[${i}]`
-        });
-        if (removed > 0) {
-          shelvesRemoved += removed;
-          continue;
-        }
-      }
       
       let shelfType = 'unknown';
       let itemsBefore = 0;
@@ -1003,7 +892,6 @@ function processShelves(shelves) {
             if (DEBUG_ENABLED) {
               console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
             }
-            rememberShortsFromShelf(shelve, collectVideoIdsFromShelf, getVideoTitle);
             shelves.splice(i, 1);
             shelvesRemoved++;
             continue;
