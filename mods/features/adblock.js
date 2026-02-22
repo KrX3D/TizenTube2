@@ -227,11 +227,7 @@ function directFilterArray(arr, page, context = '') {
     // Clear the flag
     window._isLastPlaylistBatch = false;
   }
-
-  // ⭐ FIXED: Trigger cleanup when we have stored helpers AND this is a new batch with content
-  if (isPlaylistPage && window._lastHelperVideos.length > 0 && arr.length > 0) {
-    console.log('[CLEANUP_TRIGGER] New batch detected! Stored helpers:', window._lastHelperVideos.length, '| new videos:', arr.length);
-      
+  
   // ⭐ DEBUG: Log configuration
   if (DEBUG_ENABLED && (shouldApplyShortsFilter || shouldHideWatched)) {
     console.log('[FILTER_START #' + callId + '] ========================================');
