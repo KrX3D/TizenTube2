@@ -23,7 +23,6 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
       overlay.thumbnailOverlayTimeStatusRenderer?.text?.simpleText === 'SHORTS')) return true;
 
     const navEndpoint = item.videoRenderer.navigationEndpoint;
-    if (navEndpoint?.reelWatchEndpoint) return true;
     const url = navEndpoint?.commandMetadata?.webCommandMetadata?.url || '';
     if (url.includes('/shorts/')) return true;
   }
@@ -46,13 +45,6 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
 
     const url = item.compactVideoRenderer.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url || '';
     if (url.includes('/shorts/')) return true;
-  }
-
-  if (item.tileRenderer?.onSelectCommand?.reelWatchEndpoint) return true;
-
-  if (item.tileRenderer?.onSelectCommand) {
-    const cmdStr = JSON.stringify(item.tileRenderer.onSelectCommand);
-    if (cmdStr.includes('reelWatch') || cmdStr.includes('/shorts/')) return true;
   }
 
   if (item.tileRenderer?.header?.tileHeaderRenderer?.thumbnailOverlays) {
@@ -88,20 +80,14 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
       if (durationMatch) {
         const minutes = parseInt(durationMatch[1], 10);
         const seconds = parseInt(durationMatch[2], 10);
-        const totalSeconds = minutes * 60 + seconds;
-        if (totalSeconds <= 90) {
-          return true;
-        }
-        
-        // Extended check for 90-180 seconds Shorts can be nowt till 3min
+        const totalSeconds = minutes * 60 + seconds;        
+        // Shorts can be nowt till 3min
         if (totalSeconds <= 180) {
           return true;
         }
       }
     }
   }
-
-  if (item.richItemRenderer?.content?.reelItemRenderer) return true;
 
   if (item.tileRenderer?.header?.tileHeaderRenderer?.thumbnail?.thumbnails) {
     const thumb = item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails[0];
