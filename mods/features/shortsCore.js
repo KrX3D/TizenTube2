@@ -7,18 +7,6 @@ export function shouldFilterShorts(shortsEnabled, page) {
   return !shortsEnabled && page !== 'playlist' && page !== 'playlists';
 }
 
-export function isShortsShelfTitle(title = '') {
-  const t = String(title).toLowerCase();
-  return t.includes('shorts') || t.includes('short');
-}
-
-export function isKnownShortFromShelfMemory(item, getVideoId, getVideoTitle) {
-  const id = getVideoId(item);
-  if (id !== 'unknown' && window._shortsVideoIdsFromShelves?.has(id)) return true;
-
-  const title = getVideoTitle(item).trim().toLowerCase();
-  return !!title && !!window._shortsTitlesFromShelves?.has(title);
-}
 
 export function filterShortItems(items, { page, debugEnabled = false, logShorts = false } = {}) {
   if (!Array.isArray(items)) return { items: [], removed: 0 };
@@ -145,31 +133,4 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
     console.log('[SHORTS_DIAGNOSTIC] not short', videoId);
   }
   return false;
-}
-
-export function getShelfTitle(shelf) {
-  const titleText = (title) => {
-    if (!title) return '';
-    if (title.simpleText) return title.simpleText;
-    if (Array.isArray(title.runs)) return title.runs.map((run) => run.text).join('');
-    return '';
-  };
-
-  const titlePaths = [
-    shelf?.shelfRenderer?.shelfHeaderRenderer?.title,
-    shelf?.shelfRenderer?.headerRenderer?.shelfHeaderRenderer?.title,
-    shelf?.headerRenderer?.shelfHeaderRenderer?.title,
-    shelf?.richShelfRenderer?.title,
-    shelf?.richSectionRenderer?.content?.richShelfRenderer?.title,
-    shelf?.gridRenderer?.header?.gridHeaderRenderer?.title,
-    shelf?.shelfRenderer?.headerRenderer?.shelfHeaderRenderer?.avatarLockup?.avatarLockupRenderer?.title,
-    shelf?.headerRenderer?.shelfHeaderRenderer?.avatarLockup?.avatarLockupRenderer?.title,
-  ];
-
-  for (const rawTitle of titlePaths) {
-    const text = titleText(rawTitle);
-    if (text) return text;
-  }
-
-  return '';
 }

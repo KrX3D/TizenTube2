@@ -1,8 +1,7 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
-import { applyAdCleanup, applyBrowseAdFiltering, applyShortsAdFiltering } from './adCleanup.js';
-import { isShortItem, initShortsTrackingState, shouldFilterShorts, isKnownShortFromShelfMemory, filterShortItems } from './shortsCore.js';
+import { isShortItem, initShortsTrackingState, shouldFilterShorts, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -178,13 +177,6 @@ function directFilterArray(arr, page, context = '') {
                    item.gridVideoRenderer?.videoId ||
                    item.compactVideoRenderer?.videoId ||
                    'unknown';
-
-    if (isKnownShortFromShelfMemory(item, getVideoId, getVideoTitle)) {
-      if (LOG_SHORTS && DEBUG_ENABLED) {
-        console.log('[SHORTS_SHELF] Removing item by previously removed shorts shelf memory:', videoId);
-      }
-      return false;
-    }
 
     const videoKey = getVideoKey(item);
     if (isPlaylistPage && (window._playlistRemovedHelpers.has(videoId) || window._playlistRemovedHelperKeys?.has(videoKey))) {
@@ -414,9 +406,6 @@ window._collectedUnwatched = window._collectedUnwatched || [];
 const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
-  const adBlockEnabled = configRead('enableAdBlock');
-
-  applyAdCleanup(r, adBlockEnabled);
 
   // Drop "masthead" ad from home screen
   if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
@@ -434,9 +423,6 @@ JSON.parse = function () {
           console.log('[BROWSE] Hash:', window.location.hash);
           console.log('[BROWSE] ========================================');
       }
-      
-      applyBrowseAdFiltering(r, adBlockEnabled);
-
       processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
     } else {
       if (DEBUG_ENABLED) {
@@ -444,9 +430,6 @@ JSON.parse = function () {
       }
     }
   }
-
-  // Remove shorts ads
-  applyShortsAdFiltering(r, adBlockEnabled);
 
   if (r?.title?.runs) {
     PatchSettings(r);
