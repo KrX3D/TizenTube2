@@ -1,4 +1,4 @@
-
+// If removed, breaks playlist filtering, subscription and channel watched viltering and shorts removal + watch page removal
 export function shouldFilterShorts(shortsEnabled, page) {
   return !shortsEnabled && page !== 'playlist' && page !== 'playlists';
 }

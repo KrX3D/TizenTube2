@@ -1,7 +1,7 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
-import { isShortItem, shouldFilterShorts, filterShortItems } from './shortsCore.js';
+import { shouldFilterShorts, filterShortItems } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -187,7 +187,7 @@ function directFilterArray(arr, page, context = '') {
     }
     
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
-    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+    if (shouldApplyShortsFilter) {
       shortsCount++;
       
       // ⭐ ADD VISUAL MARKER
