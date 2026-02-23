@@ -96,6 +96,16 @@ function directFilterArray(arr, page, context = '') {
     return true;
   });
   
+  // ⭐ KrX, needed or no videos at playlist if first batch is completly watched PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
+  if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
+    
+    const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
+    const lastVideoId = getVideoId(lastVideo) || 'unknown';
+    window._lastHelperVideos = [lastVideo];
+    window._playlistScrollHelpers.clear();
+    window._playlistScrollHelpers.add(lastVideoId);
+    return [lastVideo];
+  }
   
   // ⭐ Clean up after filtering if last batch
   if (isLastBatch && isPlaylistPage) {
@@ -111,18 +121,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
   
   // If this is an array with video items, filter it
   if (Array.isArray(obj) && obj.length > 0) {
-    // Check if it looks like a video items array
-    const hasVideoItems = obj.some(item => 
-      item?.tileRenderer || 
-      item?.videoRenderer || 
-      item?.gridVideoRenderer ||
-      item?.compactVideoRenderer ||
-      item?.richItemRenderer?.content?.videoRenderer
-    );
-    
-    if (hasVideoItems) {
-      return directFilterArray(obj, page, path);
-    }
     
     // Check if this is a shelves array - remove empty shelves after filtering
     const hasShelves = obj.some(item =>
