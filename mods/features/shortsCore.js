@@ -14,28 +14,6 @@ export function filterShortItems(items, { page, debugEnabled = false, logShorts 
 export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
   if (!item) return false;
 
-  if (item.compactVideoRenderer) {
-    const overlays = item.compactVideoRenderer.thumbnailOverlays || [];
-    if (overlays.some((overlay) =>
-      overlay.thumbnailOverlayTimeStatusRenderer?.style === 'SHORTS' ||
-      overlay.thumbnailOverlayTimeStatusRenderer?.text?.simpleText === 'SHORTS')) return true;
-
-    const url = item.compactVideoRenderer.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url || '';
-    if (url.includes('/shorts/')) return true;
-  }
-
-  if (item.tileRenderer?.header?.tileHeaderRenderer?.thumbnailOverlays) {
-    const hasShortsBadge = item.tileRenderer.header.tileHeaderRenderer.thumbnailOverlays.some((overlay) =>
-      overlay.thumbnailOverlayTimeStatusRenderer?.style === 'SHORTS' ||
-      overlay.thumbnailOverlayTimeStatusRenderer?.text?.simpleText === 'SHORTS' ||
-      overlay.thumbnailOverlayTimeStatusRenderer?.text?.runs?.some((run) => run.text === 'SHORTS')
-    );
-    if (hasShortsBadge) return true;
-  }
-
-  const videoTitle = item.tileRenderer?.metadata?.tileMetadataRenderer?.title?.simpleText || '';
-  if (videoTitle.toLowerCase().includes('#shorts') || videoTitle.toLowerCase().includes('#short')) return true;
-
   if (item.tileRenderer) {
     let lengthText = null;
     const thumbnailOverlays = item.tileRenderer.header?.tileHeaderRenderer?.thumbnailOverlays;
@@ -64,11 +42,6 @@ export function isShortItem(item, { debugEnabled = false, logShorts = false, cur
         }
       }
     }
-  }
-
-  if (item.tileRenderer?.header?.tileHeaderRenderer?.thumbnail?.thumbnails) {
-    const thumb = item.tileRenderer.header.tileHeaderRenderer.thumbnail.thumbnails[0];
-    if (thumb && thumb.height > thumb.width) return true;
   }
   return false;
 }
