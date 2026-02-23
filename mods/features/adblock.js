@@ -121,6 +121,19 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
   
   // If this is an array with video items, filter it
   if (Array.isArray(obj) && obj.length > 0) {
+    // Check if it looks like a video items array
+    const hasVideoItems = obj.some(item => 
+      item?.tileRenderer || 
+      item?.videoRenderer || 
+      item?.gridVideoRenderer ||
+      item?.compactVideoRenderer ||
+      item?.richItemRenderer?.content?.videoRenderer
+    );
+    
+    // KrX needed for hiding shorts and watched videos in subscription, channels and playlist
+    if (hasVideoItems) {
+      return directFilterArray(obj, page, path);
+    }
     
     // Check if this is a shelves array - remove empty shelves after filtering
     const hasShelves = obj.some(item =>
@@ -130,15 +143,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasShelves) {
-      // Filter shelves recursively
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          const value = obj[key];
-          if (value && typeof value === 'object') {
-            scanAndFilterAllArrays(value, page, path + '[' + key + ']');
-          }
-        }
-      }
 
       // Then remove empty shelves
       for (let i = obj.length - 1; i >= 0; i--) {
