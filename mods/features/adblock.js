@@ -195,24 +195,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
       return directFilterArray(obj, page, path);
     }
     
-    // Recursively scan object properties
-    for (const key in obj) {
-      if (obj.hasOwnProperty(key)) {
-        const value = obj[key];
-        
-        if (Array.isArray(value)) {
-          // Filter this array
-          const filtered = scanAndFilterAllArrays(value, page, path + '.' + key);
-          if (filtered) {
-            obj[key] = filtered;
-          }
-        } else if (value && typeof value === 'object') {
-          // Recurse into objects
-          scanAndFilterAllArrays(value, page, path + '.' + key);
-        }
-      }
-    }
-    
     // Check if this is a shelves array - remove empty shelves after filtering
     const hasShelves = obj.some(item =>
       item?.shelfRenderer ||
@@ -232,7 +214,7 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
           }
         }
       }
-      
+
       // Then remove empty shelves
       for (let i = obj.length - 1; i >= 0; i--) {
         const shelf = obj[i];
@@ -261,6 +243,24 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
       }
       
       return; // Don't return the array, we modified it in place
+    }
+  }
+
+  // Recursively scan object properties
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key];
+      
+      if (Array.isArray(value)) {
+        // Filter this array
+        const filtered = scanAndFilterAllArrays(value, page, path + '.' + key);
+        if (filtered) {
+          obj[key] = filtered;
+        }
+      } else if (value && typeof value === 'object') {
+        // Recurse into objects
+        scanAndFilterAllArrays(value, page, path + '.' + key);
+      }
     }
   }
 }
