@@ -42,15 +42,6 @@ function getVideoId(item) {
     null;
 }
 
-function getVideoKey(item) {
-  const id = getVideoId(item);
-  const title = item?.tileRenderer?.metadata?.tileMetadataRenderer?.title?.simpleText ||
-    item?.videoRenderer?.title?.runs?.[0]?.text ||
-    item?.gridVideoRenderer?.title?.runs?.[0]?.text ||
-    item?.compactVideoRenderer?.title?.simpleText || '';
-  return `${id || 'unknown'}|${title}`;
-}
-
 function directFilterArray(arr, page, context = '') {
   if (!Array.isArray(arr) || arr.length === 0) return arr;
   
@@ -59,31 +50,7 @@ function directFilterArray(arr, page, context = '') {
 
   // ⭐ Check if this is a playlist page
   isPlaylistPage = (page === 'playlist' || page === 'playlists');
-  
-  // ⭐ FILTER MODE: Only show videos from our collected list
-  const filterIds = getFilteredVideoIds();
-  
-  if (isPlaylistPage && filterIds) {
-    console.log('[FILTER_MODE] 🔄 Active - filtering to', filterIds.size, 'unwatched videos');
     
-    const filtered = arr.filter(item => {
-      const videoId = item.tileRenderer?.contentId || 
-                     item.videoRenderer?.videoId || 
-                     item.playlistVideoRenderer?.videoId ||
-                     item.gridVideoRenderer?.videoId ||
-                     item.compactVideoRenderer?.videoId;
-      
-      const keep = filterIds.has(videoId);
-      if (!keep && videoId) {
-        console.log('[FILTER_MODE] 🔄 Hiding (not in unwatched list):', videoId);
-      }
-      return keep;
-    });
-    
-    console.log('[FILTER_MODE] 🔄 Kept', filtered.length, 'of', arr.length, 'videos');
-    return filtered;
-  }
-  
   const shortsEnabled = configRead('enableShorts');
   const hideWatchedEnabled = configRead('enableHideWatchedVideos');
   const configPages = configRead('hideWatchedVideosPages') || [];
@@ -166,13 +133,6 @@ function directFilterArray(arr, page, context = '') {
                    item.compactVideoRenderer?.videoId ||
                    'unknown';
 
-    const videoKey = getVideoKey(item);
-    if (isPlaylistPage && (window._playlistRemovedHelpers.has(videoId) || window._playlistRemovedHelperKeys?.has(videoKey))) {
-      if (DEBUG_ENABLED) {
-        console.log('[HELPER_CLEANUP] Removing stale helper from data:', videoId, '| key=', videoKey);
-      }
-      return false;
-    }
     
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
     if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
@@ -243,12 +203,6 @@ function directFilterArray(arr, page, context = '') {
   
   // ⭐ PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
   if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
-    
-    // ⭐ CHECK: Are we in filter mode? If so, NO helpers needed!
-    if (filterIds) {
-      console.log('[FILTER_MODE] 🔄 All filtered in this batch - no helpers needed (filter mode active)');
-      return [];  // Return empty - we're showing only specific videos
-    }
     
     const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
     const lastVideoId = getVideoId(lastVideo) || 'unknown';
