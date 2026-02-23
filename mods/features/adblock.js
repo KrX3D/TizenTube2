@@ -86,15 +86,6 @@ function directFilterArray(arr, page, context = '') {
   if (!window._playlistRemovedHelperKeys) {
     window._playlistRemovedHelperKeys = new Set();
   }
-  
-  // ⭐ DIAGNOSTIC: Log what we're checking
-  if (isPlaylistPage && DEBUG_ENABLED) {
-    console.log('>>>>>> PRE-CLEANUP CHECK <<<<<<');
-    console.log('>>>>>> Has helpers:', window._lastHelperVideos?.length || 0);
-    console.log('>>>>>> Array length:', arr.length);
-    console.log('>>>>>> Context:', context);
-    console.log('>>>>>> Last batch flag:', window._isLastPlaylistBatch);
-  }
 
   // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
   let isLastBatch = false;
@@ -104,18 +95,6 @@ function directFilterArray(arr, page, context = '') {
     isLastBatch = true;
     // Clear the flag
     window._isLastPlaylistBatch = false;
-  }
-  
-  // ⭐ DEBUG: Log configuration
-  if (DEBUG_ENABLED && (shouldApplyShortsFilter || shouldHideWatched)) {
-    console.log('[FILTER_START #' + callId + '] ========================================');
-    console.log('[FILTER_START #' + callId + '] Context:', context);
-    console.log('[FILTER_START #' + callId + '] Page:', page);
-    console.log('[FILTER_START #' + callId + '] Is Playlist:', isPlaylistPage);
-    console.log('[FILTER_START #' + callId + '] Total items:', arr.length);
-    console.log('[FILTER_CONFIG #' + callId + '] Threshold:', threshold + '%');
-    console.log('[FILTER_CONFIG #' + callId + '] Hide watched:', shouldHideWatched);
-    console.log('[FILTER_CONFIG #' + callId + '] Filter shorts:', shouldApplyShortsFilter);
   }
   
   let hiddenCount = 0;
@@ -137,13 +116,6 @@ function directFilterArray(arr, page, context = '') {
     // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
     if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
       shortsCount++;
-      
-      // ⭐ ADD VISUAL MARKER
-      console.log('✂️✂️✂️ SHORT REMOVED:', videoId, '| Page:', page);
-
-      if (LOG_SHORTS && DEBUG_ENABLED) {
-        console.log('[FILTER #' + callId + '] REMOVED SHORT:', videoId);
-      }
       return false;
     }
     
@@ -156,10 +128,6 @@ function directFilterArray(arr, page, context = '') {
         if (!progressBar) {
           // No progress bar = unwatched = KEEP IT
           noProgressBarCount++;
-          
-          if (LOG_WATCHED && DEBUG_ENABLED) {
-            console.log('[FILTER #' + callId + '] ✓ KEEPING (playlist, no progress):', videoId);
-          }
           return true;
         }
       }
@@ -184,23 +152,6 @@ function directFilterArray(arr, page, context = '') {
     return true;
   });
   
-  // ⭐ Enhanced summary logging
-  if (DEBUG_ENABLED) {
-    console.log('[FILTER_END #' + callId + '] ========================================');
-    console.log('[FILTER_END #' + callId + '] Original count:', originalLength);
-    console.log('[FILTER_END #' + callId + '] Final count:', filtered.length);
-    console.log('[FILTER_END #' + callId + '] Removed total:', (originalLength - filtered.length));
-    console.log('[FILTER_END #' + callId + '] ├─ Watched removed:', hiddenCount);
-    console.log('[FILTER_END #' + callId + '] ├─ Shorts removed:', shortsCount);
-    if (shortsCount > 0) {
-      console.log('✂️✂️✂️ TOTAL SHORTS FILTERED THIS BATCH:', shortsCount);
-    }
-    if (isPlaylistPage) {
-      console.log('[FILTER_END #' + callId + '] └─ Unwatched kept (no progress):', noProgressBarCount);
-    }
-    console.log('[FILTER_END #' + callId + '] ========================================');
-  }
-  
   // ⭐ PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
   if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
     
@@ -217,11 +168,8 @@ function directFilterArray(arr, page, context = '') {
   
   // ⭐ Clean up after filtering if last batch
   if (isLastBatch && isPlaylistPage) {
-    console.log('--------------------------------->> FINAL CLEANUP (last batch detected)');
-    console.log('--------------------------------->> Clearing all helpers and trackers');
     window._lastHelperVideos = [];
     window._playlistScrollHelpers.clear();
-    console.log('--------------------------------->> All helpers cleared!');
   }
   
   return filtered;
@@ -291,9 +239,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
         }
         
         if (isEmpty) {
-          if (DEBUG_ENABLED) {
-            console.log('[SCAN_CLEANUP] Removing empty shelf at:', path + '[' + i + ']');
-          }
           obj.splice(i, 1);
         }
       }
@@ -321,29 +266,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
   }
 }
 
-// ⭐ PLAYLIST COLLECTION MODE: Store unwatched videos, then reload filtered
-const PLAYLIST_STORAGE_KEY = 'tizentube_playlist_unwatched';
-
-function getFilteredVideoIds() {
-  const stored = localStorage.getItem(PLAYLIST_STORAGE_KEY);
-  if (!stored) return null;
-  
-  try {
-    const data = JSON.parse(stored);
-    if (data.mode === 'filtering' && Array.isArray(data.videoIds)) {
-      if (data.videoIds.length === 0) {
-        localStorage.removeItem(PLAYLIST_STORAGE_KEY);
-        return null;
-      }
-      return new Set(data.videoIds);
-    }
-  } catch {}
-  return null;
-}
-
-// ⭐ Track collected unwatched videos during collection mode
-window._collectedUnwatched = window._collectedUnwatched || [];
-
 const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
@@ -355,15 +277,6 @@ JSON.parse = function () {
     // ONLY process once per unique response object
     if (!r.__tizentubeProcessedBrowse) {
       r.__tizentubeProcessedBrowse = true;
-      
-      // ⭐ NON-PLAYLIST PAGES: Normal processing
-      if (DEBUG_ENABLED) {
-          console.log('[BROWSE] ==============tvBrowseRenderer============');
-          console.log('[BROWSE] Page:', currentPage);
-          console.log('[BROWSE] URL:', window.location.href);
-          console.log('[BROWSE] Hash:', window.location.hash);
-          console.log('[BROWSE] ========================================');
-      }
       processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
     } else {
       if (DEBUG_ENABLED) {
@@ -379,35 +292,14 @@ JSON.parse = function () {
   if (r?.contents?.sectionListRenderer?.contents) {
     if (!r.__tizentubeProcessedSection) {
       r.__tizentubeProcessedSection = true;
-      if (DEBUG_ENABLED) {
-        console.log('SHELF_ENTRY', 'Processing sectionListRenderer.contents', {
-          count: r.contents.sectionListRenderer.contents.length,
-          page: getCurrentPage()
-        });
-      }
       processShelves(r.contents.sectionListRenderer.contents);
-    } else {
-      if (DEBUG_ENABLED) {
-        console.log('[JSON.parse] sectionListRenderer already processed, SKIPPING');
-      }
     }
   }
 
   if (r?.continuationContents?.sectionListContinuation?.contents) {
     const page = getCurrentPage();
     const effectivePage = page === 'other' ? (window._lastDetectedPage || page) : page;
-    if (DEBUG_ENABLED) {
-      console.log('[CONTINUATION]', page, '(effective:', effectivePage + ') - Processing', r.continuationContents.sectionListContinuation.contents.length, 'shelves');
-    }
-
     if (window._lastLoggedPage !== effectivePage) {
-      if (DEBUG_ENABLED) {
-        console.log('[PAGE_DEBUG] ========================================');
-        console.log('[PAGE_DEBUG] Page changed to:', effectivePage);
-        console.log('[PAGE_DEBUG] URL:', window.location.href);
-        console.log('[PAGE_DEBUG] Hash:', window.location.hash);
-        console.log('[PAGE_DEBUG] ========================================');
-      }
       window._lastLoggedPage = effectivePage;
     }
 
@@ -422,25 +314,12 @@ JSON.parse = function () {
     // ⭐ CHECK FOR LAST PAGE HERE (where we have full response)
     const hasContinuation = !!r.continuationContents.playlistVideoListContinuation.continuations;
     
-    console.log('═══════════════════════════════════════════════════════');
-    console.log('═══ PLAYLIST CONTINUATION DETECTED');
-    console.log('═══ Page:', page);
-    console.log('═══ Has continuation token:', hasContinuation);
-    console.log('═══ Continuations object:', r.continuationContents.playlistVideoListContinuation.continuations);
-    console.log('═══ Videos in batch:', r.continuationContents.playlistVideoListContinuation.contents.length);
-    
     if (!hasContinuation) {
-      console.log('═══ ⭐⭐⭐ THIS IS THE LAST BATCH! ⭐⭐⭐');
       // Set flag for directFilterArray to read
       window._isLastPlaylistBatch = true;
     } else {
-      console.log('═══ More batches to come...');
       window._isLastPlaylistBatch = false;
     }
-    console.log('═══════════════════════════════════════════════════════');
-  
-    
-    // Continue with normal processing via universal filter
   }
   
   // Handle onResponseReceivedActions (lazy-loaded channel tabs AND PLAYLIST SCROLLING)
@@ -448,38 +327,11 @@ JSON.parse = function () {
     const page = getCurrentPage();
     const effectivePage = page === 'other' ? (window._lastDetectedPage || page) : page;
     
-    if (DEBUG_ENABLED) {
-      console.log('[ON_RESPONSE] ========================================');
-      console.log('[ON_RESPONSE] Page:', page, '| effective:', effectivePage);
-      console.log('[ON_RESPONSE] Actions:', r.onResponseReceivedActions.length);
-    }
-  
-    // ⭐ NEW: Log playlist structure with MARKER
-    if (page === 'playlist' || page === 'playlists') {
-      console.log('#####################>>> PLAYLIST STRUCTURE DETECTED <<<#####################');
-      console.log('#####################>>> Response keys:', Object.keys(r));
-      console.log('#####################>>> Has contents:', !!r.contents);
-      console.log('#####################>>> Has continuationContents:', !!r.continuationContents);
-      console.log('#####################>>> Has onResponseReceivedActions:', !!r.onResponseReceivedActions);
-      if (r.contents) {
-        console.log('#####################>>> contents keys:', Object.keys(r.contents));
-      }
-      console.log('#####################>>> END PLAYLIST STRUCTURE <<<#####################');
-    }
-    
     r.onResponseReceivedActions.forEach((action, idx) => {
       // Handle appendContinuationItemsAction (playlist/channel/subscription continuations)
       if (action.appendContinuationItemsAction?.continuationItems) {
         let items = action.appendContinuationItemsAction.continuationItems;
         
-        if (DEBUG_ENABLED) {
-          console.log(`[ON_RESPONSE] Action ${idx}: appendContinuationItemsAction`);
-          console.log(`[ON_RESPONSE] Items:`, items.length);
-          if (items[0]) {
-            console.log(`[ON_RESPONSE] First item keys:`, Object.keys(items[0]));
-          }
-        }
-
         // First scan recursively so shelf-like continuation payloads on Tizen 5.5/6.5 also get filtered.
         scanAndFilterAllArrays(items, page, `onResponse-${idx}`);
 
@@ -488,12 +340,7 @@ JSON.parse = function () {
         action.appendContinuationItemsAction.continuationItems = filtered;
       }
     });
-    
-    if (DEBUG_ENABLED) {
-      console.log('[ON_RESPONSE] ========================================');
-    }
   }
-
 
   if (r?.continuationContents?.horizontalListContinuation?.items) {
     if (DEBUG_ENABLED) {
@@ -510,17 +357,8 @@ JSON.parse = function () {
     if (page === 'subscriptions' && !r.__tizentubeProcessedSubs) {
       r.__tizentubeProcessedSubs = true;
       
-      if (LOG_WATCHED && DEBUG_ENABLED) {
-        console.log('[SUBSCRIPTIONS] ========================================');
-        console.log('[SUBSCRIPTIONS] Processing subscriptions page');
-      }
-      
       const sections = r.contents.tvBrowseRenderer.content.tvSecondaryNavRenderer.sections || [];
-      
-      if (LOG_WATCHED && DEBUG_ENABLED) {
-        console.log('[SUBSCRIPTIONS] Sections found:', sections.length);
-      }
-      
+            
       sections.forEach((section, idx) => {
         if (!section.tvSecondaryNavSectionRenderer?.items) return;
         
@@ -546,9 +384,6 @@ JSON.parse = function () {
           }
           // Process rich grid content
           else if (content?.richGridRenderer?.contents) {
-            if (LOG_WATCHED && DEBUG_ENABLED) {
-              console.log(`[SUBSCRIPTIONS] Section ${idx}, Item ${itemIdx}: RICH GRID (${content.richGridRenderer.contents.length} items)`);
-            }
             const filtered = directFilterArray(
               content.richGridRenderer.contents,
               page,
@@ -558,37 +393,17 @@ JSON.parse = function () {
           }
         });
       });
-      
-      if (LOG_WATCHED && DEBUG_ENABLED) {
-        console.log('[SUBSCRIPTIONS] Processing complete');
-        console.log('[SUBSCRIPTIONS] ========================================');
-      }
     }
   }
 
   // Log library page structure
-  if (r?.contents?.tvBrowseRenderer && getCurrentPage() === 'library') {
-      if (LOG_WATCHED && DEBUG_ENABLED) {    
-        console.log('[LIBRARY] ========================================');
-        console.log('[LIBRARY] Structure detected');
-        console.log('[LIBRARY] URL:', window.location.href);
-      }
-      
+  if (r?.contents?.tvBrowseRenderer && getCurrentPage() === 'library') {      
       if (r.contents.tvBrowseRenderer.content?.tvSecondaryNavRenderer) {
         const tabs = r.contents.tvBrowseRenderer.content.tvSecondaryNavRenderer.sections;
-        if (LOG_WATCHED && DEBUG_ENABLED) {    
-          console.log('[LIBRARY] Has', tabs?.length || 0, 'tab sections');
-        }
       }
       
       if (r.contents.tvBrowseRenderer.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer) {
         const shelves = r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents;
-        if (LOG_WATCHED && DEBUG_ENABLED) {    
-          console.log('[LIBRARY] Main view has', shelves?.length || 0, 'shelves');
-        }
-      }
-      if (LOG_WATCHED && DEBUG_ENABLED) {    
-        console.log('[LIBRARY] ========================================');
       }
   }
 
@@ -600,11 +415,6 @@ JSON.parse = function () {
     
     // Only process if it's actually a playlist page
     if (page === 'playlist') {
-      if (LOG_WATCHED && DEBUG_ENABLED) {    
-        console.log('[PLAYLIST] ========================================');
-        console.log('[PLAYLIST] Entered playlist');
-        console.log('[PLAYLIST] Page:', page);
-      }
       
       const tabs = r.contents.singleColumnBrowseResultsRenderer.tabs;
       if (tabs) {
@@ -617,9 +427,6 @@ JSON.parse = function () {
           }
         });
       }
-      if (LOG_WATCHED && DEBUG_ENABLED) {    
-        console.log('[PLAYLIST] ========================================');
-      }
     }
   }
   
@@ -627,19 +434,8 @@ JSON.parse = function () {
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
     const page = getCurrentPage();
     
-    if (LOG_WATCHED && DEBUG_ENABLED) {
-      console.log('[SINGLE_COLUMN] ========================================');
-      console.log('[SINGLE_COLUMN] Page:', page);
-      console.log('[SINGLE_COLUMN] Applying direct filtering...');
-    }
-    
     // Scan and filter ALL arrays
     scanAndFilterAllArrays(r.contents.singleColumnBrowseResultsRenderer, page);
-    
-    if (LOG_WATCHED && DEBUG_ENABLED) {
-      console.log('[SINGLE_COLUMN] Direct filtering complete');
-      console.log('[SINGLE_COLUMN] ========================================');
-    }
   }
 
   if (r?.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer) {
@@ -654,58 +450,8 @@ JSON.parse = function () {
   if (criticalPages.includes(currentPage) && !r.__universalFilterApplied) {
     r.__universalFilterApplied = true;
     
-    //if (DEBUG_ENABLED) {
-      //console.log('[UNIVERSAL] ========================================');
-      //console.log('[UNIVERSAL] Applying universal filtering to page:', currentPage);
-    //}
-    
     // Scan the ENTIRE response object and filter ALL video arrays
     scanAndFilterAllArrays(r, currentPage);
-    
-    //if (DEBUG_ENABLED) {
-      //console.log('[UNIVERSAL] Universal filtering complete');
-      //console.log('[UNIVERSAL] ========================================');
-    //}
-  }
-
-  // ⭐ DIAGNOSTIC: Log ALL response structures for playlists
-  if ((currentPage === 'playlist' || currentPage === 'playlists') && DEBUG_ENABLED) {
-    //console.log('[PLAYLIST_DIAGNOSTIC] ========================================');
-    //console.log('[PLAYLIST_DIAGNOSTIC] Response structure:');
-    
-    // Check all possible continuation structures
-    if (r.continuationContents) {
-      console.log('[PLAYLIST_DIAGNOSTIC] ✓ Has continuationContents');
-      console.log('[PLAYLIST_DIAGNOSTIC] continuationContents keys:', Object.keys(r.continuationContents));
-    }
-    
-    if (r.onResponseReceivedActions) {
-      console.log('[PLAYLIST_DIAGNOSTIC] ✓ Has onResponseReceivedActions');
-      console.log('[PLAYLIST_DIAGNOSTIC] Actions count:', r.onResponseReceivedActions.length);
-      r.onResponseReceivedActions.forEach((action, idx) => {
-        console.log(`[PLAYLIST_DIAGNOSTIC] Action ${idx} keys:`, Object.keys(action));
-      });
-    }
-    
-    if (r.onResponseReceivedEndpoints) {
-      console.log('[PLAYLIST_DIAGNOSTIC] ✓ Has onResponseReceivedEndpoints');
-      console.log('[PLAYLIST_DIAGNOSTIC] Endpoints:', r.onResponseReceivedEndpoints.length);
-    }
-    
-    if (r.contents) {
-      console.log('[PLAYLIST_DIAGNOSTIC] ✓ Has contents');
-      console.log('[PLAYLIST_DIAGNOSTIC] contents keys:', Object.keys(r.contents));
-    }
-    
-    // Log if this is marked as processed
-    if (r.__tizentubeProcessedPlaylist) {
-      console.log('[PLAYLIST_DIAGNOSTIC] ⚠ Already marked as processed');
-    }
-    if (r.__universalFilterApplied) {
-      //console.log('[PLAYLIST_DIAGNOSTIC] ⚠ Universal filter already applied');
-    }
-    
-    //console.log('[PLAYLIST_DIAGNOSTIC] ========================================');
   }
 
   return r;
@@ -731,26 +477,9 @@ function processShelves(shelves) {
   const configPages = configRead('hideWatchedVideosPages') || [];
   const shouldHideWatched = hideWatchedEnabled;
   
-  if (DEBUG_ENABLED) {
-    console.log('[SHELF] Page:', page, '| Shelves:', shelves.length, '| Hide watched:', shouldHideWatched, '| Shorts:', shortsEnabled);
-  }
 
   if (window._lastLoggedPage !== page) {
-    if (DEBUG_ENABLED) {
-      console.log('[PAGE_DEBUG] ========================================');
-      console.log('[PAGE_DEBUG] Page changed to:', page);
-      console.log('[PAGE_DEBUG] URL:', window.location.href);
-      console.log('[PAGE_DEBUG] Hash:', window.location.hash);
-      console.log('$$$$$$$$$$$ Shorts enabled:', shortsEnabled);
-      console.log('$$$$$$$$$$$ Total shelves:', shelves.length);
-      console.log('[PAGE_DEBUG] ========================================');
-    }
     window._lastLoggedPage = page;
-  }
-
-  // Lightweight diagnostics only (full per-shelf dumps are too slow on TV)
-  if (DEBUG_ENABLED && (page === 'subscriptions' || page.includes('channel'))) {
-    console.log('[SHELF_PROCESS] page=', page, '| shelves=', shelves.length, '| shortsEnabled=', shortsEnabled);
   }
 
   let totalItemsBefore = 0;
@@ -902,9 +631,6 @@ function processShelves(shelves) {
           const innerShelf = shelve.richSectionRenderer.content.richShelfRenderer;
           const contents = innerShelf?.content?.richGridRenderer?.contents;
           if (contents.length === 0) {
-            if (DEBUG_ENABLED && LOG_SHORTS) {
-              console.log('[SHELF_PROCESS] Removing shorts richSection shelf');
-            }
             shelves.splice(i, 1);
             shelvesRemoved++;
             continue;
@@ -1156,12 +882,6 @@ function getCurrentPage() {
   const lastFullUrl = window._lastFullUrl;
   
   if (detectedPage !== lastDetectedPage || fullUrl !== lastFullUrl) {
-    if (DEBUG_ENABLED) {
-      console.log(`[PAGE] ${lastDetectedPage||'initial'} → ${detectedPage}`);
-      console.log(`[PAGE] Hash: "${cleanHash}"`);
-      if (browseParam) console.log(`[PAGE] Browse param: "${browseParam}"`);
-    }
-    
     window._lastDetectedPage = detectedPage;
     window._lastFullUrl = fullUrl;
   }
