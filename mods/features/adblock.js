@@ -57,7 +57,6 @@ function directFilterArray(arr, page, context = '') {
   // Shorts filtering is INDEPENDENT - always check if shorts are disabled
   const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
   
-  
   // ⭐ Check if this is a playlist page
   isPlaylistPage = (page === 'playlist' || page === 'playlists');
   
@@ -85,18 +84,6 @@ function directFilterArray(arr, page, context = '') {
       return false;
     }
     
-    // ⭐ STEP 2: Filter watched videos (only if enabled for this page)
-    if (shouldHideWatched) {
-      const progressBar = findProgressBar(item);
-      
-      // Calculate progress percentage
-      const percentWatched = progressBar ? Number(progressBar.percentDurationWatched || 0) : 0;
-      
-      // Hide if watched above threshold
-      if (percentWatched >= threshold) {
-        return false;
-      }
-    }    
     return true;
   });
   
