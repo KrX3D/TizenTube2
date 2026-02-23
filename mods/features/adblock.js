@@ -221,6 +221,18 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasShelves) {
+      const shortsEnabled = configRead('enableShorts');
+
+      // Filter shelves recursively
+      for (const key in obj) {
+        if (obj.hasOwnProperty(key)) {
+          const value = obj[key];
+          if (value && typeof value === 'object') {
+            scanAndFilterAllArrays(value, page, path + '[' + key + ']');
+          }
+        }
+      }
+      
       // Then remove empty shelves
       for (let i = obj.length - 1; i >= 0; i--) {
         const shelf = obj[i];
