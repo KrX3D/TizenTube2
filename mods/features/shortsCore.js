@@ -14,16 +14,6 @@ export function filterShortItems(items, { page, debugEnabled = false, logShorts 
 export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
   if (!item) return false;
 
-  if (item.gridVideoRenderer) {
-    const overlays = item.gridVideoRenderer.thumbnailOverlays || [];
-    if (overlays.some((overlay) =>
-      overlay.thumbnailOverlayTimeStatusRenderer?.style === 'SHORTS' ||
-      overlay.thumbnailOverlayTimeStatusRenderer?.text?.simpleText === 'SHORTS')) return true;
-
-    const url = item.gridVideoRenderer.navigationEndpoint?.commandMetadata?.webCommandMetadata?.url || '';
-    if (url.includes('/shorts/')) return true;
-  }
-
   if (item.compactVideoRenderer) {
     const overlays = item.compactVideoRenderer.thumbnailOverlays || [];
     if (overlays.some((overlay) =>
