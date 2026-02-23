@@ -141,9 +141,9 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
       item?.richShelfRenderer ||
       item?.gridRenderer
     );
-    
+    // Krx needed for channels removal of watched and Shorts shelf. 
     if (hasShelves) {
-      // Krx needed for channels removal of watched and Shorts shelf. Filter shelves recursively
+      // Filter shelves recursively
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
           const value = obj[key];
@@ -153,27 +153,19 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
         }
       }
 
+      // Then remove empty shelves
+      for (let i = obj.length - 1; i >= 0; i--) {
+        const shelf = obj[i];
+        if (!shelf) {
+          obj.splice(i, 1);
+          continue;
+        }
+        
+      }
       return; // Don't return the array, we modified it in place
     }
   }
 
-  // Recursively scan object properties
-  for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
-      const value = obj[key];
-      
-      if (Array.isArray(value)) {
-        // Filter this array
-        const filtered = scanAndFilterAllArrays(value, page, path + '.' + key);
-        if (filtered) {
-          obj[key] = filtered;
-        }
-      } else if (value && typeof value === 'object') {
-        // Recurse into objects
-        scanAndFilterAllArrays(value, page, path + '.' + key);
-      }
-    }
-  }
 }
 
 const origParse = JSON.parse;
