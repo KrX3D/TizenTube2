@@ -47,17 +47,12 @@ function directFilterArray(arr, page, context = '') {
   
   // ⭐ Check if this is a playlist page
   let isPlaylistPage;
-
-  // ⭐ Check if this is a playlist page
-  isPlaylistPage = (page === 'playlist' || page === 'playlists');
     
   const shortsEnabled = configRead('enableShorts');
-  const hideWatchedEnabled = configRead('enableHideWatchedVideos');
-  const configPages = configRead('hideWatchedVideosPages') || [];
   const threshold = Number(configRead('hideWatchedVideosThreshold') || 0);
   
   // Check if we should filter watched videos on this page (EXACT match)
-  const shouldHideWatched = hideWatchedEnabled;
+  const shouldHideWatched = configRead('enableHideWatchedVideos');
   
   // Shorts filtering is INDEPENDENT - always check if shorts are disabled
   const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
@@ -66,9 +61,6 @@ function directFilterArray(arr, page, context = '') {
   if (!shouldApplyShortsFilter && !shouldHideWatched) {
     return arr;
   }
-  
-  // Generate unique call ID for debugging
-  const callId = Math.random().toString(36).substr(2, 6);
   
   // ⭐ Check if this is a playlist page
   isPlaylistPage = (page === 'playlist' || page === 'playlists');
@@ -80,12 +72,6 @@ function directFilterArray(arr, page, context = '') {
   if (!window._lastHelperVideos) {
     window._lastHelperVideos = [];
   }
-  if (!window._playlistRemovedHelpers) {
-    window._playlistRemovedHelpers = new Set();
-  }
-  if (!window._playlistRemovedHelperKeys) {
-    window._playlistRemovedHelperKeys = new Set();
-  }
 
   // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
   let isLastBatch = false;
@@ -94,8 +80,6 @@ function directFilterArray(arr, page, context = '') {
     // Clear the flag
     window._isLastPlaylistBatch = false;
   }
-  
-  const originalLength = arr.length;
   
   const filtered = arr.filter(item => {
     if (!item) return true;
@@ -112,18 +96,11 @@ function directFilterArray(arr, page, context = '') {
       // Calculate progress percentage
       const percentWatched = progressBar ? Number(progressBar.percentDurationWatched || 0) : 0;
       
-      // ⭐ DEBUG: Log each decision
-      if (LOG_WATCHED && DEBUG_ENABLED) {
-        const hasProgressBar = !!progressBar;
-        const decision = percentWatched >= threshold ? '❌ HIDING' : '✓ KEEPING';
-      }
-      
       // Hide if watched above threshold
       if (percentWatched >= threshold) {
         return false;
       }
-    }
-    
+    }    
     return true;
   });
   
@@ -165,9 +142,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasVideoItems) {
-      if (DEBUG_ENABLED) {
-        console.log('[SCAN] Found video array at:', path, '| Length:', obj.length);
-      }
       return directFilterArray(obj, page, path);
     }
     
@@ -179,8 +153,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasShelves) {
-      const shortsEnabled = configRead('enableShorts');
-
       // Filter shelves recursively
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
@@ -217,7 +189,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
           obj.splice(i, 1);
         }
       }
-      
       return; // Don't return the array, we modified it in place
     }
   }
@@ -274,9 +245,6 @@ JSON.parse = function () {
   if (r?.continuationContents?.sectionListContinuation?.contents) {
     const page = getCurrentPage();
     const effectivePage = page === 'other' ? (window._lastDetectedPage || page) : page;
-    if (window._lastLoggedPage !== effectivePage) {
-      window._lastLoggedPage = effectivePage;
-    }
 
     scanAndFilterAllArrays(r.continuationContents.sectionListContinuation.contents, effectivePage, 'sectionListContinuation');
     processShelves(r.continuationContents.sectionListContinuation.contents);
@@ -300,7 +268,6 @@ JSON.parse = function () {
   // Handle onResponseReceivedActions (lazy-loaded channel tabs AND PLAYLIST SCROLLING)
   if (r?.onResponseReceivedActions) {
     const page = getCurrentPage();
-    const effectivePage = page === 'other' ? (window._lastDetectedPage || page) : page;
     
     r.onResponseReceivedActions.forEach((action, idx) => {
       // Handle appendContinuationItemsAction (playlist/channel/subscription continuations)
@@ -318,11 +285,6 @@ JSON.parse = function () {
   }
 
   if (r?.continuationContents?.horizontalListContinuation?.items) {
-    if (DEBUG_ENABLED) {
-      console.log('SHELF_ENTRY', 'Processing horizontal list continuation', {
-        count: r.continuationContents.horizontalListContinuation.items.length
-      });
-    }
     r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
   }
 
@@ -342,9 +304,6 @@ JSON.parse = function () {
         items.forEach((item, itemIdx) => {
           // Skip navigation links (compactLinkRenderer)
           if (item.compactLinkRenderer) {
-            if (LOG_WATCHED && DEBUG_ENABLED) {
-              console.log(`[SUBSCRIPTIONS] Section ${idx}, Item ${itemIdx}: NAV LINK (skipping)`);
-            }
             return;
           }
           
@@ -352,9 +311,6 @@ JSON.parse = function () {
           
           // Process shelf content
           if (content?.shelfRenderer) {
-            if (LOG_WATCHED && DEBUG_ENABLED) {
-              console.log(`[SUBSCRIPTIONS] Section ${idx}, Item ${itemIdx}: SHELF`);
-            }
             processShelves([content]);
           }
           // Process rich grid content
@@ -371,17 +327,6 @@ JSON.parse = function () {
     }
   }
 
-  // Log library page structure
-  if (r?.contents?.tvBrowseRenderer && getCurrentPage() === 'library') {      
-      if (r.contents.tvBrowseRenderer.content?.tvSecondaryNavRenderer) {
-        const tabs = r.contents.tvBrowseRenderer.content.tvSecondaryNavRenderer.sections;
-      }
-      
-      if (r.contents.tvBrowseRenderer.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer) {
-        const shelves = r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents;
-      }
-  }
-
   // ⭐ FIXED: Removed redundant window.location.hash.includes('list=') check
   // We already know the page type from getCurrentPage()
   //if (r?.contents?.singleColumnBrowseResultsRenderer && window.location.hash.includes('list=')) {
@@ -395,9 +340,6 @@ JSON.parse = function () {
       if (tabs) {
         tabs.forEach((tab, idx) => {
           if (tab.tabRenderer?.content?.sectionListRenderer?.contents) {
-            if (LOG_WATCHED && DEBUG_ENABLED) {    
-              console.log(`[PLAYLIST] Tab ${idx} - processing shelves`);
-            }
             processShelves(tab.tabRenderer.content.sectionListRenderer.contents);
           }
         });
@@ -428,7 +370,6 @@ JSON.parse = function () {
     // Scan the ENTIRE response object and filter ALL video arrays
     scanAndFilterAllArrays(r, currentPage);
   }
-
   return r;
 };
 
@@ -441,127 +382,77 @@ for (const key in window._yttv) {
 
 function processShelves(shelves) {  
   if (!Array.isArray(shelves)) {
-    console.warn('[SHELF_PROCESS] processShelves called with non-array', { type: typeof shelves });
     return;
   }
   
   const page = getCurrentPage();
   const shortsEnabled = configRead('enableShorts');
-  const horizontalShelves = shelves.filter((shelve) => shelve?.shelfRenderer?.content?.horizontalListRenderer?.items);
-  const hideWatchedEnabled = configRead('enableHideWatchedVideos');
-  const configPages = configRead('hideWatchedVideosPages') || [];
-  const shouldHideWatched = hideWatchedEnabled;
+  const shouldHideWatched = configRead('enableHideWatchedVideos');
   
-
-  if (window._lastLoggedPage !== page) {
-    window._lastLoggedPage = page;
-  }
-
-  let totalItemsBefore = 0;
-  let totalItemsAfter = 0;
-  let shelvesRemoved = 0;
-  let totalHidden = 0;
-  let totalShortsRemoved = 0;
   
   for (let i = shelves.length - 1; i >= 0; i--) {
     try {
       const shelve = shelves[i];
       if (!shelve) continue;
-
-      let shelfType = 'unknown';
-      let itemsBefore = 0;
-      let itemsAfter = 0;
       
       // Handle shelfRenderer
       if (shelve.shelfRenderer) {
         // horizontalListRenderer
         if (shelve.shelfRenderer.content?.horizontalListRenderer?.items) {
-          shelfType = 'hList';
           let items = shelve.shelfRenderer.content.horizontalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
-          itemsBefore = items.length;
           
-          // ⭐ WATCHED FILTERING (always runs, independent of shorts)
-          const beforeHide = items.length;
           if (shouldHideWatched) {
             items = hideVideo(items);
-            totalHidden += (beforeHide - items.length);
           }
           if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            if (DEBUG_ENABLED) console.log('[SHELF_PROCESS] Watched filter would empty shelf; keeping original items to avoid black screen');
             items = originalItems;
           }
-          itemsAfter = items.length;
           
           shelve.shelfRenderer.content.horizontalListRenderer.items = items;
           
           if (items.length === 0) {
-            if (DEBUG_ENABLED) {
-              console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
-            }
             shelves.splice(i, 1);
-            shelvesRemoved++;
             continue;
           }
         }
         
         // gridRenderer
         else if (shelve.shelfRenderer.content?.gridRenderer?.items) {
-          shelfType = 'grid';
           let items = shelve.shelfRenderer.content.gridRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
-          itemsBefore = items.length;
           
-          
-          const beforeHide = items.length;
           if (shouldHideWatched) {
             items = hideVideo(items);
-            totalHidden += (beforeHide - items.length);
           }
           if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            if (DEBUG_ENABLED) console.log('[SHELF_PROCESS] Watched filter would empty shelf; keeping original items to avoid black screen');
             items = originalItems;
           }
-          itemsAfter = items.length;
           
           shelve.shelfRenderer.content.gridRenderer.items = items;
           
           if (items.length === 0) {
-            if (DEBUG_ENABLED) {
-              console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
-            }
             shelves.splice(i, 1);
-            shelvesRemoved++;
             continue;
           }
         }
 
         // verticalListRenderer
         else if (shelve.shelfRenderer.content?.verticalListRenderer?.items) {
-          shelfType = 'vList';
           let items = shelve.shelfRenderer.content.verticalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
-          itemsBefore = items.length;
           
-          const beforeHide = items.length;
           if (shouldHideWatched) {
             items = hideVideo(items);
-            totalHidden += (beforeHide - items.length);
           }
           if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            if (DEBUG_ENABLED) console.log('[SHELF_PROCESS] Watched filter would empty shelf; keeping original items to avoid black screen');
             items = originalItems;
           }
-          itemsAfter = items.length;
           
           shelve.shelfRenderer.content.verticalListRenderer.items = items;
           
           if (items.length === 0) {
-            if (DEBUG_ENABLED) {
-              console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
-            }
             shelves.splice(i, 1);
-            shelvesRemoved++;
             continue;
           }
         }
@@ -569,45 +460,31 @@ function processShelves(shelves) {
       
       // Handle richShelfRenderer (subscriptions)
       else if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
-        shelfType = 'richGrid';
         let contents = shelve.richShelfRenderer.content.richGridRenderer.contents;
         const originalContents = Array.isArray(contents) ? contents.slice() : [];
-        itemsBefore = contents.length;
         
-        
-        const beforeHide = contents.length;
         if (shouldHideWatched) {
           contents = hideVideo(contents);
-          totalHidden += (beforeHide - contents.length);
         }
         if (shouldHideWatched && contents.length === 0 && originalContents.length > 0) {
-          if (DEBUG_ENABLED) console.log('[SHELF_PROCESS] Watched filter would empty shelf; keeping original items to avoid black screen');
           contents = originalContents;
         }
-        itemsAfter = contents.length;
         
         shelve.richShelfRenderer.content.richGridRenderer.contents = contents;
         
         if (contents.length === 0) {
-          if (DEBUG_ENABLED) {
-            console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
-          }
           shelves.splice(i, 1);
-          shelvesRemoved++;
           continue;
         }
       }
 
       // Handle richSectionRenderer
-      else if (shelve.richSectionRenderer?.content?.richShelfRenderer) {
-        shelfType = 'richSec';
-        
+      else if (shelve.richSectionRenderer?.content?.richShelfRenderer) {        
         if (!shortsEnabled) {
           const innerShelf = shelve.richSectionRenderer.content.richShelfRenderer;
           const contents = innerShelf?.content?.richGridRenderer?.contents;
           if (contents.length === 0) {
             shelves.splice(i, 1);
-            shelvesRemoved++;
             continue;
           }
         }
@@ -615,37 +492,23 @@ function processShelves(shelves) {
 
       // Handle gridRenderer at shelf level
       else if (shelve.gridRenderer?.items) {
-        shelfType = 'topGrid';
         let items = shelve.gridRenderer.items;
         const originalItems = Array.isArray(items) ? items.slice() : [];
-        itemsBefore = items.length;
         
-        
-        const beforeHide = items.length;
         if (shouldHideWatched) {
           items = hideVideo(items);
-          totalHidden += (beforeHide - items.length);
         }
         if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-          if (DEBUG_ENABLED) console.log('[SHELF_PROCESS] Watched filter would empty shelf; keeping original items to avoid black screen');
           items = originalItems;
         }
-        itemsAfter = items.length;
         
         shelve.gridRenderer.items = items;
         
         if (items.length === 0) {
-          if (DEBUG_ENABLED) {
-            console.log('[SHELF_PROCESS] Shelf empty after filtering, removing');
-          }
           shelves.splice(i, 1);
-          shelvesRemoved++;
           continue;
         }
       }
-      
-      totalItemsBefore += itemsBefore;
-      totalItemsAfter += itemsAfter;
       
     } catch (error) {
       if (DEBUG_ENABLED) {
@@ -677,16 +540,8 @@ function processShelves(shelves) {
     }
     
     if (isEmpty) {
-      if (DEBUG_ENABLED) {
-        console.log('[SHELF_CLEANUP] Removing empty shelf');
-      }
       shelves.splice(i, 1);
     }
-  }
-  
-  // Summary
-  if (DEBUG_ENABLED) {
-    console.log('[SHELF] Done:', totalItemsBefore, '→', totalItemsAfter, '| Hidden:', totalHidden, '| Shorts:', totalShortsRemoved, '| Removed:', shelvesRemoved, 'shelves');
   }
 }
 
@@ -756,7 +611,6 @@ function findProgressBar(item) {
 
 // Track last page to detect changes
 let lastDetectedPage = null;
-let lastFullUrl = null;
 
 function getCurrentPage() {
   const hash = location.hash ? location.hash.substring(1) : '';
@@ -852,13 +706,10 @@ function getCurrentPage() {
   }
   
   // Logging
-  const fullUrl = location.href;
   const lastDetectedPage = window._lastDetectedPage;
-  const lastFullUrl = window._lastFullUrl;
   
-  if (detectedPage !== lastDetectedPage || fullUrl !== lastFullUrl) {
+  if (detectedPage !== lastDetectedPage) {
     window._lastDetectedPage = detectedPage;
-    window._lastFullUrl = fullUrl;
   }
   
   return detectedPage;
