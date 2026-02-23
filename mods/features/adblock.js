@@ -1,7 +1,7 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
 import { hideShorts } from './hideShorts.js';
-import { isShortItem, shouldFilterShorts } from './shortsCore.js';
+import { isShortItem } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
 // ⭐ CONFIGURATION: Set these to control logging output
@@ -54,9 +54,6 @@ function directFilterArray(arr, page, context = '') {
   // Check if we should filter watched videos on this page (EXACT match)
   const shouldHideWatched = configRead('enableHideWatchedVideos');
   
-  // Shorts filtering is INDEPENDENT - always check if shorts are disabled
-  const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
-  
   // ⭐ Check if this is a playlist page
   isPlaylistPage = (page === 'playlist' || page === 'playlists');
   
@@ -80,26 +77,25 @@ function directFilterArray(arr, page, context = '') {
     if (!item) return true;
 
     // KrX needed to hide shorts on subscription
-    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+    if (!shortsEnabled && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
       return false;
     }
-    
+
+    // ⭐ Removed watched on channels, subscriptions and watch page
+    if (shouldHideWatched) {
+      const progressBar = findProgressBar(item);
+      
+      // Calculate progress percentage
+      const percentWatched = progressBar ? Number(progressBar.percentDurationWatched || 0) : 0;
+      
+      // Hide if watched above threshold
+      if (percentWatched >= threshold) {
+        return false;
+      }
+    }
     return true;
   });
   
-  // ⭐ PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
-  if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
-    
-    const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
-    const lastVideoId = getVideoId(lastVideo) || 'unknown';
-    if (DEBUG_ENABLED) {
-      console.log('[HELPER] ALL FILTERED - keeping 1 helper for continuation trigger:', lastVideoId);
-    }
-    window._lastHelperVideos = [lastVideo];
-    window._playlistScrollHelpers.clear();
-    window._playlistScrollHelpers.add(lastVideoId);
-    return [lastVideo];
-  }
   
   // ⭐ Clean up after filtering if last batch
   if (isLastBatch && isPlaylistPage) {
