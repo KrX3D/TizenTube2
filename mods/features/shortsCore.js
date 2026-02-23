@@ -14,19 +14,6 @@ export function filterShortItems(items, { page, debugEnabled = false, logShorts 
 export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
   if (!item) return false;
 
-  if (item.tileRenderer?.contentType === 'TILE_CONTENT_TYPE_SHORT') return true;
-
-  if (item.videoRenderer) {
-    const overlays = item.videoRenderer.thumbnailOverlays || [];
-    if (overlays.some((overlay) =>
-      overlay.thumbnailOverlayTimeStatusRenderer?.style === 'SHORTS' ||
-      overlay.thumbnailOverlayTimeStatusRenderer?.text?.simpleText === 'SHORTS')) return true;
-
-    const navEndpoint = item.videoRenderer.navigationEndpoint;
-    const url = navEndpoint?.commandMetadata?.webCommandMetadata?.url || '';
-    if (url.includes('/shorts/')) return true;
-  }
-
   if (item.gridVideoRenderer) {
     const overlays = item.gridVideoRenderer.thumbnailOverlays || [];
     if (overlays.some((overlay) =>
