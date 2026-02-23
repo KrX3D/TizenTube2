@@ -90,40 +90,24 @@ function directFilterArray(arr, page, context = '') {
   // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
   let isLastBatch = false;
   if (isPlaylistPage && window._isLastPlaylistBatch === true) {
-    console.log('--------------------------------->> Using last batch flag from response');
-    console.log('--------------------------------->> This IS the last batch!');
     isLastBatch = true;
     // Clear the flag
     window._isLastPlaylistBatch = false;
   }
   
-  let hiddenCount = 0;
-  let shortsCount = 0;
-  let noProgressBarCount = 0;
   const originalLength = arr.length;
   
   const filtered = arr.filter(item => {
     if (!item) return true;
 
-    const videoId = item.tileRenderer?.contentId || 
-                   item.videoRenderer?.videoId || 
-                   item.playlistVideoRenderer?.videoId ||
-                   item.gridVideoRenderer?.videoId ||
-                   item.compactVideoRenderer?.videoId ||
-                   'unknown';
-
+    // KrX needed to hide shorts on subscription
+    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+      return false;
+    }
+    
     // ⭐ STEP 2: Filter watched videos (only if enabled for this page)
     if (shouldHideWatched) {
       const progressBar = findProgressBar(item);
-      
-      // ⭐ PLAYLIST SPECIAL HANDLING: Only filter if progress bar EXISTS
-      if (isPlaylistPage) {
-        if (!progressBar) {
-          // No progress bar = unwatched = KEEP IT
-          noProgressBarCount++;
-          return true;
-        }
-      }
       
       // Calculate progress percentage
       const percentWatched = progressBar ? Number(progressBar.percentDurationWatched || 0) : 0;
@@ -132,12 +116,10 @@ function directFilterArray(arr, page, context = '') {
       if (LOG_WATCHED && DEBUG_ENABLED) {
         const hasProgressBar = !!progressBar;
         const decision = percentWatched >= threshold ? '❌ HIDING' : '✓ KEEPING';
-        console.log('[FILTER #' + callId + '] ' + decision + ':', videoId, '| Progress:', percentWatched + '%', '| Threshold:', threshold + '%');
       }
       
       // Hide if watched above threshold
       if (percentWatched >= threshold) {
-        hiddenCount++;
         return false;
       }
     }
