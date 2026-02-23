@@ -112,6 +112,11 @@ function directFilterArray(arr, page, context = '') {
                    item.compactVideoRenderer?.videoId ||
                    'unknown';
 
+    // ⭐ STEP 1: Filter shorts FIRST (before checking progress bars)
+    if (shouldApplyShortsFilter && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+      shortsCount++;
+      return false;
+    }
     
     // ⭐ STEP 2: Filter watched videos (only if enabled for this page)
     if (shouldHideWatched) {
