@@ -57,10 +57,6 @@ function directFilterArray(arr, page, context = '') {
   // Shorts filtering is INDEPENDENT - always check if shorts are disabled
   const shouldApplyShortsFilter = shouldFilterShorts(shortsEnabled, page);
   
-  // Skip if nothing to do
-  if (!shouldApplyShortsFilter && !shouldHideWatched) {
-    return arr;
-  }
   
   // ⭐ Check if this is a playlist page
   isPlaylistPage = (page === 'playlist' || page === 'playlists');
