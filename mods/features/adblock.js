@@ -196,7 +196,6 @@ JSON.parse = function () {
       r.__tizentubeProcessedBrowse = true;
       processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
     }
-    }
   }
 
   if (r?.title?.runs) {
