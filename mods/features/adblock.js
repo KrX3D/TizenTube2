@@ -209,10 +209,6 @@ JSON.parse = function () {
       processShelves(r.contents.sectionListRenderer.contents);
     }
   }
-  //KrX black placeholders for watched and shorts in subscription page
-  if (r?.continuationContents?.horizontalListContinuation?.items) {
-    r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
-  }
 
   if (r?.contents?.tvBrowseRenderer?.content?.tvSecondaryNavRenderer) {
     const page = getCurrentPage();
@@ -261,11 +257,6 @@ JSON.parse = function () {
     // Scan and filter ALL arrays
     scanAndFilterAllArrays(r.contents.singleColumnBrowseResultsRenderer, page);
   }
-
-  if (r?.contents?.singleColumnWatchNextResults?.pivot?.sectionListRenderer) {
-    processShelves(r.contents.singleColumnWatchNextResults.pivot.sectionListRenderer.contents);
-  }
-  
   // UNIVERSAL FALLBACK - Filter EVERYTHING if we're on a critical page
   const currentPage = getCurrentPage();
   const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel', 'watch'];
