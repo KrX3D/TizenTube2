@@ -210,9 +210,6 @@ JSON.parse = function () {
     }
   }
   
-  if (r?.continuationContents?.horizontalListContinuation?.items) {
-    r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
-  }
 
   if (r?.contents?.tvBrowseRenderer?.content?.tvSecondaryNavRenderer) {
     const page = getCurrentPage();
