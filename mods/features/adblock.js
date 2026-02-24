@@ -209,21 +209,6 @@ JSON.parse = function () {
       processShelves(r.contents.sectionListRenderer.contents);
     }
   }
-
-  // Handle PLAYLIST continuations (different from section continuations!)
-  if (r?.continuationContents?.playlistVideoListContinuation?.contents) {
-    const page = getCurrentPage();
-    
-    // ⭐ CHECK FOR LAST PAGE HERE (where we have full response)
-    const hasContinuation = !!r.continuationContents.playlistVideoListContinuation.continuations;
-    
-    if (!hasContinuation) {
-      // Set flag for directFilterArray to read
-      window._isLastPlaylistBatch = true;
-    } else {
-      window._isLastPlaylistBatch = false;
-    }
-  }
   
   // Handle onResponseReceivedActions (lazy-loaded channel tabs AND PLAYLIST SCROLLING)
   if (r?.onResponseReceivedActions) {
