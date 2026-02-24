@@ -189,15 +189,18 @@ const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
 
-  if (r?.title?.runs) {
-    PatchSettings(r);
+  // krx creaks channel shorts/watched shelf all black videos
+  if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
+    // ONLY process once per unique response object
+    if (!r.__tizentubeProcessedBrowse) {
+      r.__tizentubeProcessedBrowse = true;
+      processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
+    }
+    }
   }
 
-  if (r?.contents?.sectionListRenderer?.contents) {
-    if (!r.__tizentubeProcessedSection) {
-      r.__tizentubeProcessedSection = true;
-      processShelves(r.contents.sectionListRenderer.contents);
-    }
+  if (r?.title?.runs) {
+    PatchSettings(r);
   }
 
   if (r?.continuationContents?.sectionListContinuation?.contents) {
