@@ -143,6 +143,33 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasShelves) {
+      // Then remove empty shelves
+      for (let i = obj.length - 1; i >= 0; i--) {
+        const shelf = obj[i];
+        if (!shelf) {
+          obj.splice(i, 1);
+          continue;
+        }
+        
+        let isEmpty = false;
+        
+        if (shelf.shelfRenderer?.content?.horizontalListRenderer?.items) {
+          isEmpty = shelf.shelfRenderer.content.horizontalListRenderer.items.length === 0;
+        } else if (shelf.shelfRenderer?.content?.gridRenderer?.items) {
+          isEmpty = shelf.shelfRenderer.content.gridRenderer.items.length === 0;
+        } else if (shelf.shelfRenderer?.content?.verticalListRenderer?.items) {
+          isEmpty = shelf.shelfRenderer.content.verticalListRenderer.items.length === 0;
+        } else if (shelf.richShelfRenderer?.content?.richGridRenderer?.contents) {
+          isEmpty = shelf.richShelfRenderer.content.richGridRenderer.contents.length === 0;
+        } else if (shelf.gridRenderer?.items) {
+          isEmpty = shelf.gridRenderer.items.length === 0;
+        }
+        
+        if (isEmpty) {
+          obj.splice(i, 1);
+        }
+      }
+      
       // Filter shelves recursively
       for (const key in obj) {
         if (obj.hasOwnProperty(key)) {
