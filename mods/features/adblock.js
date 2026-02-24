@@ -188,7 +188,7 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
 const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
-fi
+
   if (r?.title?.runs) {
     PatchSettings(r);
   }
