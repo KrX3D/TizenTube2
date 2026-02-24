@@ -210,25 +210,6 @@ JSON.parse = function () {
     }
   }
   
-  // Handle onResponseReceivedActions (lazy-loaded channel tabs AND PLAYLIST SCROLLING)
-  if (r?.onResponseReceivedActions) {
-    const page = getCurrentPage();
-    
-    r.onResponseReceivedActions.forEach((action, idx) => {
-      // Handle appendContinuationItemsAction (playlist/channel/subscription continuations)
-      if (action.appendContinuationItemsAction?.continuationItems) {
-        let items = action.appendContinuationItemsAction.continuationItems;
-        
-        // First scan recursively so shelf-like continuation payloads on Tizen 5.5/6.5 also get filtered.
-        scanAndFilterAllArrays(items, page, `onResponse-${idx}`);
-
-        // Then direct-filter top-level arrays with videos.
-        const filtered = directFilterArray(items, page, `continuation-${idx}`);
-        action.appendContinuationItemsAction.continuationItems = filtered;
-      }
-    });
-  }
-
   if (r?.continuationContents?.horizontalListContinuation?.items) {
     r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
   }
