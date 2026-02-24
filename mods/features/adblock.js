@@ -116,6 +116,7 @@ function directFilterArray(arr, page, context = '') {
   return filtered;
 }
 
+// KrX needed for hiding shorts and watched videos in subscription, channels and playlist
 function scanAndFilterAllArrays(obj, page, path = 'root') {
   if (!obj || typeof obj !== 'object') return;
   
@@ -130,7 +131,6 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
       item?.richItemRenderer?.content?.videoRenderer
     );
     
-    // KrX needed for hiding shorts and watched videos in subscription, channels and playlist
     if (hasVideoItems) {
       return directFilterArray(obj, page, path);
     }
@@ -141,7 +141,7 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
       item?.richShelfRenderer ||
       item?.gridRenderer
     );
-    // Krx needed for channels removal of watched and Shorts shelf. 
+    
     if (hasShelves) {
       // Filter shelves recursively
       for (const key in obj) {
@@ -166,27 +166,29 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     }
   }
 
+  // Recursively scan object properties
+  for (const key in obj) {
+    if (obj.hasOwnProperty(key)) {
+      const value = obj[key];
+      
+      if (Array.isArray(value)) {
+        // Filter this array
+        const filtered = scanAndFilterAllArrays(value, page, path + '.' + key);
+        if (filtered) {
+          obj[key] = filtered;
+        }
+      } else if (value && typeof value === 'object') {
+        // Recurse into objects
+        scanAndFilterAllArrays(value, page, path + '.' + key);
+      }
+    }
+  }
 }
 
 const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
-
-  // Drop "masthead" ad from home screen
-  if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
-    const currentPage = getCurrentPage();
-    
-    // ONLY process once per unique response object
-    if (!r.__tizentubeProcessedBrowse) {
-      r.__tizentubeProcessedBrowse = true;
-      processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
-    } else {
-      if (DEBUG_ENABLED) {
-        console.log('[JSON.parse] tvBrowseRenderer already processed, SKIPPING');
-      }
-    }
-  }
-
+fi
   if (r?.title?.runs) {
     PatchSettings(r);
   }
