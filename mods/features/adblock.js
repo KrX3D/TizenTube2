@@ -209,7 +209,10 @@ JSON.parse = function () {
       processShelves(r.contents.sectionListRenderer.contents);
     }
   }
-  
+  //KrX black placeholders for watched and shorts in subscription page
+  if (r?.continuationContents?.horizontalListContinuation?.items) {
+    r.continuationContents.horizontalListContinuation.items = hideVideo(r.continuationContents.horizontalListContinuation.items);
+  }
 
   if (r?.contents?.tvBrowseRenderer?.content?.tvSecondaryNavRenderer) {
     const page = getCurrentPage();
@@ -250,25 +253,6 @@ JSON.parse = function () {
     }
   }
 
-  // ⭐ FIXED: Removed redundant window.location.hash.includes('list=') check
-  // We already know the page type from getCurrentPage()
-  //if (r?.contents?.singleColumnBrowseResultsRenderer && window.location.hash.includes('list=')) {
-  if (r?.contents?.singleColumnBrowseResultsRenderer) {
-    const page = getCurrentPage();
-    
-    // Only process if it's actually a playlist page
-    if (page === 'playlist') {
-      
-      const tabs = r.contents.singleColumnBrowseResultsRenderer.tabs;
-      if (tabs) {
-        tabs.forEach((tab, idx) => {
-          if (tab.tabRenderer?.content?.sectionListRenderer?.contents) {
-            processShelves(tab.tabRenderer.content.sectionListRenderer.contents);
-          }
-        });
-      }
-    }
-  }
   
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
