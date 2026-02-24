@@ -210,45 +210,6 @@ JSON.parse = function () {
     }
   }
 
-  if (r?.contents?.tvBrowseRenderer?.content?.tvSecondaryNavRenderer) {
-    const page = getCurrentPage();
-    
-    if (page === 'subscriptions' && !r.__tizentubeProcessedSubs) {
-      r.__tizentubeProcessedSubs = true;
-      
-      const sections = r.contents.tvBrowseRenderer.content.tvSecondaryNavRenderer.sections || [];
-            
-      sections.forEach((section, idx) => {
-        if (!section.tvSecondaryNavSectionRenderer?.items) return;
-        
-        const items = section.tvSecondaryNavSectionRenderer.items;
-        
-        items.forEach((item, itemIdx) => {
-          // Skip navigation links (compactLinkRenderer)
-          if (item.compactLinkRenderer) {
-            return;
-          }
-          
-          const content = item.tvSecondaryNavItemRenderer?.content;
-          
-          // Process shelf content
-          if (content?.shelfRenderer) {
-            processShelves([content]);
-          }
-          // Process rich grid content
-          else if (content?.richGridRenderer?.contents) {
-            const filtered = directFilterArray(
-              content.richGridRenderer.contents,
-              page,
-              `subscriptions-section-${idx}-item-${itemIdx}`
-            );
-            content.richGridRenderer.contents = filtered;
-          }
-        });
-      });
-    }
-  }
-
   
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
