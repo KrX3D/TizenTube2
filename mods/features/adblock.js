@@ -81,7 +81,7 @@ function directFilterArray(arr, page, context = '') {
       return false;
     }
 
-    // ⭐ Removed watched on channels, subscriptions, watch page, playlist
+    // ⭐ Removed watched on channels, subscriptions and watch page
     if (shouldHideWatched) {
       const progressBar = findProgressBar(item);
       
@@ -96,8 +96,7 @@ function directFilterArray(arr, page, context = '') {
     return true;
   });
   
-  // ⭐ KrX, needed or no videos at playlist if first batch is completly watched 
-  // PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
+  // ⭐ KrX, needed or no videos at playlist if first batch is completly watched PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
   if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
     
     const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
@@ -190,9 +189,27 @@ const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
 
+  // krx breaks channel shorts/watched shelf all black videos
+  if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
+    // ONLY process once per unique response object
+    if (!r.__tizentubeProcessedBrowse) {
+      r.__tizentubeProcessedBrowse = true;
+      processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
+    }
+  }
+
   if (r?.title?.runs) {
     PatchSettings(r);
   }
+
+  // krx breaks channel shorts/watched shelf all black videos
+  if (r?.contents?.sectionListRenderer?.contents) {
+    if (!r.__tizentubeProcessedSection) {
+      r.__tizentubeProcessedSection = true;
+      processShelves(r.contents.sectionListRenderer.contents);
+    }
+  }
+
   
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
@@ -219,6 +236,12 @@ for (const key in window._yttv) {
   if (window._yttv[key] && window._yttv[key].JSON && window._yttv[key].JSON.parse) {
     window._yttv[key].JSON.parse = JSON.parse;
   }
+}
+
+function hideVideo(items) {
+  // Simply delegate to directFilterArray - no code duplication!
+  const page = getCurrentPage();
+  return directFilterArray(items, page, 'hideVideo');
 }
 
 function findProgressBar(item) {
@@ -278,6 +301,9 @@ function findProgressBar(item) {
   
   return null;
 }
+
+// Track last page to detect changes
+let lastDetectedPage = null;
 
 function getCurrentPage() {
   const hash = location.hash ? location.hash.substring(1) : '';
