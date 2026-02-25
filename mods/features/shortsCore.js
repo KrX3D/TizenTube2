@@ -1,12 +1,5 @@
-
-export function filterShortItems(items, { page, debugEnabled = false, logShorts = false } = {}) {
-  if (!Array.isArray(items)) return { items: [], removed: 0 };
-  const filtered = items.filter((item) => !isShortItem(item, { debugEnabled, logShorts, currentPage: page || 'other' }));
-  return { items: filtered, removed: items.length - filtered.length };
-}
-
 //KrX if removed breaks suscription, library all videos ar removed and hsorts on home page only 3 shelfs remain, so filters everything
-export function isShortItem(item, { debugEnabled = false, logShorts = false, currentPage = '' } = {}) {
+export function isShortItem(item, { currentPage = '' } = {}) {
   if (!item) return false;
 
   if (item.tileRenderer) {

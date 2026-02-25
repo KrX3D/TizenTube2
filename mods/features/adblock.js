@@ -4,34 +4,6 @@ import { hideShorts } from './hideShorts.js';
 import { isShortItem } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
 
-// ⭐ CONFIGURATION: Set these to control logging output
-const LOG_SHORTS = false;   // Set false to disable shorts logging  
-const LOG_WATCHED = true;  // Set true to enable verbose watched-video logging
-
-// ⭐ PERFORMANCE: Read debug setting ONCE and cache it globally
-// Updated automatically via config change events
-let DEBUG_ENABLED = configRead('enableDebugConsole');
-
-// ⭐ EXPOSE: Allow external code to update the cache
-window.adblock = window.adblock || {};
-window.adblock.setDebugEnabled = function(value) {
-    DEBUG_ENABLED = value;
-    console.log('[CONFIG] Debug console ' + (DEBUG_ENABLED ? 'ENABLED' : 'DISABLED'));
-};
-// Listen for config changes to update DEBUG_ENABLED cache
-if (typeof window !== 'undefined') {
-  setTimeout(() => {
-    if (window.configChangeEmitter) {
-      window.configChangeEmitter.addEventListener('configChange', (e) => {
-        if (e.detail?.key === 'enableDebugConsole') {
-          DEBUG_ENABLED = e.detail.value;
-          console.log('[CONFIG] Debug console ' + (DEBUG_ENABLED ? 'ENABLED' : 'DISABLED'));
-        }
-      });
-    }
-  }, 100);
-}
-
 function getVideoId(item) {
   return item?.tileRenderer?.contentId ||
     item?.videoRenderer?.videoId ||
@@ -77,7 +49,7 @@ function directFilterArray(arr, page, context = '') {
     if (!item) return true;
 
     // KrX needed to hide shorts on subscription
-    if (!shortsEnabled && isShortItem(item, { debugEnabled: DEBUG_ENABLED, logShorts: LOG_SHORTS, currentPage: page || getCurrentPage() })) {
+    if (!shortsEnabled && isShortItem(item, { currentPage: page || getCurrentPage() })) {
       return false;
     }
 
@@ -96,7 +68,8 @@ function directFilterArray(arr, page, context = '') {
     return true;
   });
   
-  // ⭐ KrX, needed or no videos at playlist if first batch is completly watched PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
+  // ⭐ KrX, needed or no videos at playlist if first batch is completly watched 
+  // PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
   if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
     
     const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
@@ -189,27 +162,9 @@ const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
 
-  // krx breaks channel shorts/watched shelf all black videos
-  if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
-    // ONLY process once per unique response object
-    if (!r.__tizentubeProcessedBrowse) {
-      r.__tizentubeProcessedBrowse = true;
-      processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
-    }
-  }
-
   if (r?.title?.runs) {
     PatchSettings(r);
   }
-
-  // krx breaks channel shorts/watched shelf all black videos
-  if (r?.contents?.sectionListRenderer?.contents) {
-    if (!r.__tizentubeProcessedSection) {
-      r.__tizentubeProcessedSection = true;
-      processShelves(r.contents.sectionListRenderer.contents);
-    }
-  }
-
   
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
@@ -236,12 +191,6 @@ for (const key in window._yttv) {
   if (window._yttv[key] && window._yttv[key].JSON && window._yttv[key].JSON.parse) {
     window._yttv[key].JSON.parse = JSON.parse;
   }
-}
-
-function hideVideo(items) {
-  // Simply delegate to directFilterArray - no code duplication!
-  const page = getCurrentPage();
-  return directFilterArray(items, page, 'hideVideo');
 }
 
 function findProgressBar(item) {
@@ -301,9 +250,6 @@ function findProgressBar(item) {
   
   return null;
 }
-
-// Track last page to detect changes
-let lastDetectedPage = null;
 
 function getCurrentPage() {
   const hash = location.hash ? location.hash.substring(1) : '';

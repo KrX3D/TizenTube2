@@ -121,20 +121,5 @@ function customAction(action, parameters) {
         case 'SHOW_TOAST':
             showToast('TizenTube', parameters);
             break;
-        case 'TOGGLE_DEBUG_CONSOLE':
-            if (typeof window.toggleDebugConsole === 'function') {
-                window.toggleDebugConsole();
-                
-                // ⭐ UPDATE: Manually update the cached DEBUG_ENABLED in adblock.js
-                const newValue = configRead('enableDebugConsole');
-                if (window.adblock && window.adblock.setDebugEnabled) {
-                    window.adblock.setDebugEnabled(newValue);
-                }
-                
-                showToast('Debug Console', 'Console ' + (newValue ? 'shown' : 'hidden'));
-            } else {
-                showToast('Debug Console', 'Console not available');
-            }
-            break;
     }
 }
