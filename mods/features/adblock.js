@@ -254,9 +254,15 @@ function processShelves(shelves) {
       
       // Handle shelfRenderer
       if (shelve.shelfRenderer) {
+        // horizontalListRenderer
+        if (shelve.shelfRenderer.content?.horizontalListRenderer?.items) {
+          let items = shelve.shelfRenderer.content.horizontalListRenderer.items;
+          const originalItems = Array.isArray(items) ? items.slice() : [];
+          
+        }
         
         // gridRenderer
-        if (shelve.shelfRenderer.content?.gridRenderer?.items) {
+        else if (shelve.shelfRenderer.content?.gridRenderer?.items) {
           let items = shelve.shelfRenderer.content.gridRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           
