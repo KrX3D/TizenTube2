@@ -5,15 +5,8 @@ const defaultConfig = {
   focusContainerColor: '#0f0f0f',
   routeColor: '#0f0f0f',
   enableFixedUI: (window.h5vcc && window.h5vcc.tizentube) ? false : true,
-  enableChapters: true,
   enableShorts: false,
-  dontCheckUpdateUntil: 0,
-  enableWhoIsWatchingMenu: false,
-  enableShowUserLanguage: true,
-  enableShowOtherLanguages: false,
   enablePreviousNextButtons: true,
-  enableSuperThanksButton: false,
-  enableSpeedControlsButton: true,
   enablePatchingVideoPlayer: true,
   enableHideWatchedVideos: true,
   hideWatchedVideosThreshold: 10,
@@ -29,20 +22,11 @@ const defaultConfig = {
       'more',
       'watch'
   ],
-  enablePlaylistContinueButton: true,
   lastAnnouncementCheck: 0,
   enableScreenDimming: true,
   dimmingTimeout: 60,
   dimmingOpacity: 0.5,
-  speedSettingsIncrement: 0.25,
-  launchToOnStartup: null,
   disabledSidebarContents: ['TROPHY', 'NEWS', 'YOUTUBE_MUSIC', 'BROADCAST', 'CLAPPERBOARD', 'LIVE', 'GAMING', 'TAB_MORE'],
-  enableUpdater: true,
-  autoFrameRate: false,
-  autoFrameRatePauseVideoFor: 0,
-  enableDebugConsole: false,
-  debugConsolePosition: 'bottom-right', // top-left, top-right, bottom-left, bottom-right, center
-  debugConsoleHeight: '500',
 };
 
 let localConfig;
