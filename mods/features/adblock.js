@@ -189,27 +189,9 @@ const origParse = JSON.parse;
 JSON.parse = function () {
   const r = origParse.apply(this, arguments);
 
-  // krx breaks channel shorts/watched shelf all black videos
-  if (r?.contents?.tvBrowseRenderer?.content?.tvSurfaceContentRenderer?.content?.sectionListRenderer?.contents) {
-    // ONLY process once per unique response object
-    if (!r.__tizentubeProcessedBrowse) {
-      r.__tizentubeProcessedBrowse = true;
-      processShelves(r.contents.tvBrowseRenderer.content.tvSurfaceContentRenderer.content.sectionListRenderer.contents);
-    }
-  }
-
   if (r?.title?.runs) {
     PatchSettings(r);
   }
-
-  // krx breaks channel shorts/watched shelf all black videos
-  if (r?.contents?.sectionListRenderer?.contents) {
-    if (!r.__tizentubeProcessedSection) {
-      r.__tizentubeProcessedSection = true;
-      processShelves(r.contents.sectionListRenderer.contents);
-    }
-  }
-
   
   // Handle singleColumnBrowseResultsRenderer (alternative playlist format)
   if (r?.contents?.singleColumnBrowseResultsRenderer?.tabs) {
@@ -236,16 +218,6 @@ for (const key in window._yttv) {
   if (window._yttv[key] && window._yttv[key].JSON && window._yttv[key].JSON.parse) {
     window._yttv[key].JSON.parse = JSON.parse;
   }
-}
-
-function processShelves(shelves) {  
-  if (!Array.isArray(shelves)) {
-    return;
-  }
-  
-  const shortsEnabled = configRead('enableShorts');
-  const shouldHideWatched = configRead('enableHideWatchedVideos');
-  
 }
 
 function hideVideo(items) {
