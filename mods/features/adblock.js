@@ -252,28 +252,9 @@ function processShelves(shelves) {
       const shelve = shelves[i];
       if (!shelve) continue;
       
-      // Handle richShelfRenderer (subscriptions)
-      if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
-        let contents = shelve.richShelfRenderer.content.richGridRenderer.contents;
-        const originalContents = Array.isArray(contents) ? contents.slice() : [];
-        
-        if (shouldHideWatched) {
-          contents = hideVideo(contents);
-        }
-        if (shouldHideWatched && contents.length === 0 && originalContents.length > 0) {
-          contents = originalContents;
-        }
-        
-        shelve.richShelfRenderer.content.richGridRenderer.contents = contents;
-        
-        if (contents.length === 0) {
-          shelves.splice(i, 1);
-          continue;
-        }
-      }
 
       // Handle richSectionRenderer
-      else if (shelve.richSectionRenderer?.content?.richShelfRenderer) {        
+      if (shelve.richSectionRenderer?.content?.richShelfRenderer) {        
         if (!shortsEnabled) {
           const innerShelf = shelve.richSectionRenderer.content.richShelfRenderer;
           const contents = innerShelf?.content?.richGridRenderer?.contents;
