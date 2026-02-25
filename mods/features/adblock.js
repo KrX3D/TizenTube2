@@ -4,18 +4,22 @@ import { PatchSettings } from '../ui/customYTSettings.js';
 
 
 const PLAYLIST_PAGES = new Set(['playlist', 'playlists']);
-const BROWSE_PAGE_MAP = {
-  felibrary: 'library',
-  fehistory: 'history',
-  femy_youtube: 'playlist',
-  feplaylist_aggregation: 'playlists',
-  vlwl: 'playlist',
-  vlll: 'playlist'
-};
-
-const BROWSE_PAGE_PREFIX_MAP = {
-  vlpl: 'playlist'
-};
+const BROWSE_PAGE_RULES = [
+  { type: 'includes', value: 'fesubscription', page: 'subscriptions' },
+  { type: 'exact', value: 'felibrary', page: 'library' },
+  { type: 'exact', value: 'fehistory', page: 'history' },
+  { type: 'exact', value: 'femy_youtube', page: 'playlist' },
+  { type: 'exact', value: 'feplaylist_aggregation', page: 'playlists' },
+  { type: 'prefix', value: 'vlpl', page: 'playlist' },
+  { type: 'exact', value: 'vlwl', page: 'playlist' },
+  { type: 'exact', value: 'vlll', page: 'playlist' },
+  { type: 'includes', value: 'fetopics_music', page: 'music' },
+  { type: 'includes', value: 'music', page: 'music' },
+  { type: 'includes', value: 'fetopics_gaming', page: 'gaming' },
+  { type: 'includes', value: 'gaming', page: 'gaming' },
+  { type: 'includes', value: 'fetopics', page: 'home' },
+  { type: 'prefix', value: 'uc', page: 'channel', minLength: 11 }
+];
 
 function isPlaylistPage(page) {
   return PLAYLIST_PAGES.has(page);
@@ -37,10 +41,11 @@ function shouldRunUniversalFilter(page) {
 
 function resolveBrowseParamPage(browseParam) {
   if (!browseParam) return null;
-  if (BROWSE_PAGE_MAP[browseParam]) return BROWSE_PAGE_MAP[browseParam];
 
-  for (const prefix in BROWSE_PAGE_PREFIX_MAP) {
-    if (browseParam.startsWith(prefix)) return BROWSE_PAGE_PREFIX_MAP[prefix];
+  for (const rule of BROWSE_PAGE_RULES) {
+    if (rule.type === 'exact' && browseParam === rule.value) return rule.page;
+    if (rule.type === 'prefix' && browseParam.startsWith(rule.value) && (!rule.minLength || browseParam.length >= rule.minLength)) return rule.page;
+    if (rule.type === 'includes' && browseParam.includes(rule.value)) return rule.page;
   }
 
   return null;
@@ -390,32 +395,9 @@ function getCurrentPage() {
   let detectedPage = 'other';
   
   // PRIORITY 1: Check browse parameters (Tizen TV uses these!)
-  
-  // Subscriptions
-  if (browseParam.includes('fesubscription')) {
-    detectedPage = 'subscriptions';
-  }
-  else {
-    const mappedBrowsePage = resolveBrowseParamPage(browseParam);
-    if (mappedBrowsePage) {
-      detectedPage = mappedBrowsePage;
-    }
-
-    // Topics (home variations)
-    else if (browseParam.includes('fetopics_music') || browseParam.includes('music')) {
-      detectedPage = 'music';
-    }
-    else if (browseParam.includes('fetopics_gaming') || browseParam.includes('gaming')) {
-      detectedPage = 'gaming';
-    }
-    else if (browseParam.includes('fetopics')) {
-      detectedPage = 'home';
-    }
-    
-    // Channel pages
-    else if (browseParam.startsWith('uc') && browseParam.length > 10) {
-      detectedPage = 'channel';
-    }
+  const mappedBrowsePage = resolveBrowseParamPage(browseParam);
+  if (mappedBrowsePage) {
+    detectedPage = mappedBrowsePage;
   }
   
   // PRIORITY 2: Check traditional patterns
