@@ -90,7 +90,7 @@ function directFilterArray(arr, page, context = '') {
       
       // Hide if watched above threshold
       if (percentWatched >= threshold) {
-        return false;
+        //return false;
       }
     }
     return true;
@@ -220,12 +220,6 @@ for (const key in window._yttv) {
   }
 }
 
-function hideVideo(items) {
-  // Simply delegate to directFilterArray - no code duplication!
-  const page = getCurrentPage();
-  return directFilterArray(items, page, 'hideVideo');
-}
-
 function findProgressBar(item) {
   if (!item) return null;
   
@@ -283,9 +277,6 @@ function findProgressBar(item) {
   
   return null;
 }
-
-// Track last page to detect changes
-let lastDetectedPage = null;
 
 function getCurrentPage() {
   const hash = location.hash ? location.hash.substring(1) : '';
