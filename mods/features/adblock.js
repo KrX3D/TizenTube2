@@ -246,39 +246,6 @@ function processShelves(shelves) {
   const shortsEnabled = configRead('enableShorts');
   const shouldHideWatched = configRead('enableHideWatchedVideos');
   
-  
-  for (let i = shelves.length - 1; i >= 0; i--) {
-    try {
-      const shelve = shelves[i];
-      if (!shelve) continue;
-
-      // Handle gridRenderer at shelf level
-      if (shelve.gridRenderer?.items) {
-        let items = shelve.gridRenderer.items;
-        const originalItems = Array.isArray(items) ? items.slice() : [];
-        
-        if (shouldHideWatched) {
-          items = hideVideo(items);
-        }
-        if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-          items = originalItems;
-        }
-        
-        shelve.gridRenderer.items = items;
-        
-        if (items.length === 0) {
-          shelves.splice(i, 1);
-          continue;
-        }
-      }
-      
-    } catch (error) {
-      if (DEBUG_ENABLED) {
-        console.log('[SHELF] ERROR shelf', (shelves.length - i), ':', error.message);
-      }
-    }
-  }
-  
   // FINAL CLEANUP: Remove any remaining empty shelves
   for (let i = shelves.length - 1; i >= 0; i--) {
     const shelve = shelves[i];
