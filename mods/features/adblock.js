@@ -254,35 +254,10 @@ function processShelves(shelves) {
       
       // Handle shelfRenderer
       if (shelve.shelfRenderer) {
-        // horizontalListRenderer
-        if (shelve.shelfRenderer.content?.horizontalListRenderer?.items) {
-          let items = shelve.shelfRenderer.content.horizontalListRenderer.items;
-          const originalItems = Array.isArray(items) ? items.slice() : [];
-          
-        }
         
-        // gridRenderer
-        else if (shelve.shelfRenderer.content?.gridRenderer?.items) {
-          let items = shelve.shelfRenderer.content.gridRenderer.items;
-          const originalItems = Array.isArray(items) ? items.slice() : [];
-          
-          if (shouldHideWatched) {
-            items = hideVideo(items);
-          }
-          if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            items = originalItems;
-          }
-          
-          shelve.shelfRenderer.content.gridRenderer.items = items;
-          
-          if (items.length === 0) {
-            shelves.splice(i, 1);
-            continue;
-          }
-        }
 
         // verticalListRenderer
-        else if (shelve.shelfRenderer.content?.verticalListRenderer?.items) {
+        if (shelve.shelfRenderer.content?.verticalListRenderer?.items) {
           let items = shelve.shelfRenderer.content.verticalListRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           
