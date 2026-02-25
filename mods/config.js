@@ -7,6 +7,8 @@ const defaultConfig = {
   enableFixedUI: (window.h5vcc && window.h5vcc.tizentube) ? false : true,
   enableChapters: true,
   enableShorts: false,
+  enablePreviews: true,
+  showWelcomeToast: false,
   dontCheckUpdateUntil: 0,
   enableWhoIsWatchingMenu: false,
   enableShowUserLanguage: true,

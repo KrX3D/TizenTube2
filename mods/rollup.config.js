@@ -25,10 +25,10 @@ export default {
             babelHelpers: 'bundled',
             presets: [
                 ['@babel/preset-env', {
-                    // Updated target: Tizen 2016+ TVs support Chrome 56+
-                    // This enables modern features like fetch, Promise, async/await
+                    // Keep broad compatibility for older Tizen WebViews that can still receive
+                    // current CDN bundles but fail on newer syntax.
                     targets: {
-                        chrome: '56'  // Changed from 47 to 56
+                        chrome: '47'
                     },
                     // Keep polyfills for safety
                     useBuiltIns: false,
@@ -38,7 +38,7 @@ export default {
             ],
         }),
         terser({
-            ecma: 2016, // Changed from '5' to 2016 (ES7)
+            ecma: 5,
             mangle: true,
             // Keep WebSocket and other important globals
             compress: {
