@@ -246,32 +246,6 @@ function processShelves(shelves) {
   const shortsEnabled = configRead('enableShorts');
   const shouldHideWatched = configRead('enableHideWatchedVideos');
   
-  // FINAL CLEANUP: Remove any remaining empty shelves
-  for (let i = shelves.length - 1; i >= 0; i--) {
-    const shelve = shelves[i];
-    if (!shelve) {
-      shelves.splice(i, 1);
-      continue;
-    }
-    
-    let isEmpty = false;
-    
-    if (shelve.shelfRenderer?.content?.horizontalListRenderer?.items) {
-      isEmpty = shelve.shelfRenderer.content.horizontalListRenderer.items.length === 0;
-    } else if (shelve.shelfRenderer?.content?.gridRenderer?.items) {
-      isEmpty = shelve.shelfRenderer.content.gridRenderer.items.length === 0;
-    } else if (shelve.shelfRenderer?.content?.verticalListRenderer?.items) {
-      isEmpty = shelve.shelfRenderer.content.verticalListRenderer.items.length === 0;
-    } else if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
-      isEmpty = shelve.richShelfRenderer.content.richGridRenderer.contents.length === 0;
-    } else if (shelve.gridRenderer?.items) {
-      isEmpty = shelve.gridRenderer.items.length === 0;
-    }
-    
-    if (isEmpty) {
-      shelves.splice(i, 1);
-    }
-  }
 }
 
 function hideVideo(items) {
