@@ -344,12 +344,5 @@ function getCurrentPage() {
     detectedPage = 'home';
   }
   
-  // Logging
-  const lastDetectedPage = window._lastDetectedPage;
-  
-  if (detectedPage !== lastDetectedPage) {
-    window._lastDetectedPage = detectedPage;
-  }
-  
   return detectedPage;
 }
