@@ -7,11 +7,6 @@ const qrcodes = {};
 export default function modernUI(update, parameters) {
     const settings = [
         {
-            name: 'Ad block',
-            icon: 'DOLLAR_SIGN',
-            value: 'enableAdBlock'
-        },
-        {
             name: 'Miscellaneous',
             icon: 'SETTINGS',
             value: null,
@@ -402,7 +397,71 @@ export default function modernUI(update, parameters) {
                         name: 'Debug Console',
                         icon: 'VISIBILITY',
                         value: 'enableDebugConsole'
-                    }
+                    },
+                    {
+                        name: 'Debug Console Position',
+                        icon: 'SETTINGS',
+                        value: null,
+                        menuId: 'tt-debug-console-position',
+                        menuHeader: {
+                            title: 'Debug Console Position',
+                            subtitle: 'Choose where to display the debug console'
+                        },
+                        options: [
+                            {
+                                name: 'Top Left',
+                                key: 'debugConsolePosition',
+                                value: 'top-left'
+                            },
+                            {
+                                name: 'Top Right',
+                                key: 'debugConsolePosition',
+                                value: 'top-right'
+                            },
+                            {
+                                name: 'Bottom Left',
+                                key: 'debugConsolePosition',
+                                value: 'bottom-left'
+                            },
+                            {
+                                name: 'Bottom Right',
+                                key: 'debugConsolePosition',
+                                value: 'bottom-right'
+                            },
+                            {
+                                name: 'Center',
+                                key: 'debugConsolePosition',
+                                value: 'center'
+                            }
+                        ]
+                    },
+                    {
+                        name: 'Debug Console Height',
+                        icon: 'SETTINGS',
+                        value: null,
+                        menuId: 'tt-debug-console-height',
+                        menuHeader: {
+                            title: 'Debug Console Height',
+                            subtitle: 'Choose console window height'
+                        },
+                        options: [
+                            {
+                                name: 'Normal (500px)',
+                                key: 'debugConsoleHeight',
+                                value: '500'
+                            },
+                            {
+                                name: 'Tall (800px)',
+                                key: 'debugConsoleHeight',
+                                value: '800'
+                            },
+                            {
+                                name: 'Full Screen (1054px)',
+                                key: 'debugConsoleHeight',
+                                value: '1054'
+                            }
+                        ]
+                    },
                 ];
             }
         },

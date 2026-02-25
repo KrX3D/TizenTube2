@@ -251,7 +251,7 @@ function processShelves(shelves) {
     try {
       const shelve = shelves[i];
       if (!shelve) continue;
-      
+
       // Handle gridRenderer at shelf level
       if (shelve.gridRenderer?.items) {
         let items = shelve.gridRenderer.items;

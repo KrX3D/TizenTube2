@@ -28,8 +28,8 @@ const defaultConfig = {
   dimmingOpacity: 0.5,
   disabledSidebarContents: ['TROPHY', 'NEWS', 'YOUTUBE_MUSIC', 'BROADCAST', 'CLAPPERBOARD', 'LIVE', 'GAMING', 'TAB_MORE'],
   enableDebugConsole: false,
-  debugConsolePosition: 'bottom-right', // top-left, top-right, bottom-left, bottom-right, center
-  debugConsoleHeight: '500',
+  debugConsolePosition: 'top-left', // top-left, top-right, bottom-left, bottom-right, center
+  debugConsoleHeight: '1054',
 };
 
 let localConfig;
