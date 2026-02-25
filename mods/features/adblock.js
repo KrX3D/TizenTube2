@@ -252,21 +252,8 @@ function processShelves(shelves) {
       const shelve = shelves[i];
       if (!shelve) continue;
       
-
-      // Handle richSectionRenderer
-      if (shelve.richSectionRenderer?.content?.richShelfRenderer) {        
-        if (!shortsEnabled) {
-          const innerShelf = shelve.richSectionRenderer.content.richShelfRenderer;
-          const contents = innerShelf?.content?.richGridRenderer?.contents;
-          if (contents.length === 0) {
-            shelves.splice(i, 1);
-            continue;
-          }
-        }
-      }
-
       // Handle gridRenderer at shelf level
-      else if (shelve.gridRenderer?.items) {
+      if (shelve.gridRenderer?.items) {
         let items = shelve.gridRenderer.items;
         const originalItems = Array.isArray(items) ? items.slice() : [];
         
