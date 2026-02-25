@@ -221,7 +221,6 @@ JSON.parse = function () {
   // UNIVERSAL FALLBACK - Filter EVERYTHING if we're on a critical page
   const currentPage = getCurrentPage();
   const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel', 'watch'];
-  //const criticalPages = ['subscriptions', 'library', 'history', 'channel'];
 
   if (criticalPages.includes(currentPage) && !r.__universalFilterApplied) {
     r.__universalFilterApplied = true;
@@ -244,7 +243,6 @@ function processShelves(shelves) {
     return;
   }
   
-  const page = getCurrentPage();
   const shortsEnabled = configRead('enableShorts');
   const shouldHideWatched = configRead('enableHideWatchedVideos');
   
@@ -256,28 +254,9 @@ function processShelves(shelves) {
       
       // Handle shelfRenderer
       if (shelve.shelfRenderer) {
-        // horizontalListRenderer
-        if (shelve.shelfRenderer.content?.horizontalListRenderer?.items) {
-          let items = shelve.shelfRenderer.content.horizontalListRenderer.items;
-          const originalItems = Array.isArray(items) ? items.slice() : [];
-          
-          if (shouldHideWatched) {
-            items = hideVideo(items);
-          }
-          if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            items = originalItems;
-          }
-          
-          shelve.shelfRenderer.content.horizontalListRenderer.items = items;
-          
-          if (items.length === 0) {
-            shelves.splice(i, 1);
-            continue;
-          }
-        }
         
         // gridRenderer
-        else if (shelve.shelfRenderer.content?.gridRenderer?.items) {
+        if (shelve.shelfRenderer.content?.gridRenderer?.items) {
           let items = shelve.shelfRenderer.content.gridRenderer.items;
           const originalItems = Array.isArray(items) ? items.slice() : [];
           
