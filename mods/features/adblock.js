@@ -252,10 +252,6 @@ function processShelves(shelves) {
       const shelve = shelves[i];
       if (!shelve) continue;
       
-      // Handle shelfRenderer
-      if (shelve.shelfRenderer) {
-        
-      
       // Handle richShelfRenderer (subscriptions)
       if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
         let contents = shelve.richShelfRenderer.content.richGridRenderer.contents;
