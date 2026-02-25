@@ -40,13 +40,6 @@ export default {
         terser({
             ecma: 5,
             mangle: true,
-            // Keep WebSocket and other important globals
-            compress: {
-                pure_getters: true,
-                unsafe: false,
-                unsafe_comps: false,
-                warnings: false
-            }
         }),
     ]
 };

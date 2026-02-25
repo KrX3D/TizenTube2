@@ -1,8 +1,6 @@
 import { configWrite, configRead } from './config.js';
 import modernUI, { optionShow } from './ui/settings.js';
-import { speedSettings } from './ui/speedUI.js';
 import { showToast, buttonItem } from './ui/ytUI.js';
-import checkForUpdates from './features/updater.js';
 import appPkg from '../package.json';
 const APP_VERSION = appPkg.version;
 const APP_VERSION_LABEL = `v${APP_VERSION.split('.').pop()}`;
@@ -120,69 +118,8 @@ function customAction(action, parameters) {
         case 'TT_SETTINGS_SHOW':
             modernUI();
             break;
-        case 'TT_SPEED_SETTINGS_SHOW':
-            speedSettings();
-            break;
-        case 'UPDATE_REMIND_LATER':
-            configWrite('dontCheckUpdateUntil', parameters);
-            break;
-        case 'UPDATE_DOWNLOAD':
-            window.h5vcc.tizentube.InstallAppFromURL(parameters);
-            showToast('TizenTube Update', 'Downloading update, please wait...');
-            break;
-        case 'SET_PLAYER_SPEED':
-            const speed = Number(parameters);
-            document.querySelector('video').playbackRate = speed;
-            break;
         case 'SHOW_TOAST':
             showToast('TizenTube', parameters);
-            break;
-        case 'ADD_TO_QUEUE':
-            window.queuedVideos.videos.push(parameters);
-            showToast('TizenTube', 'Video added to queue.');
-            break;
-        case 'CLEAR_QUEUE':
-            window.queuedVideos.videos = [];
-            showToast('TizenTube', 'Video queue cleared.');
-            break;
-        case 'CHECK_FOR_UPDATES':
-            checkForUpdates(true);
-            break;
-        case 'TOGGLE_DEBUG_CONSOLE':
-            if (typeof window.toggleDebugConsole === 'function') {
-                window.toggleDebugConsole();
-                
-                // ⭐ UPDATE: Manually update the cached DEBUG_ENABLED in adblock.js
-                const newValue = configRead('enableDebugConsole');
-                if (window.adblock && window.adblock.setDebugEnabled) {
-                    window.adblock.setDebugEnabled(newValue);
-                }
-                
-                showToast('Debug Console', 'Console ' + (newValue ? 'shown' : 'hidden'));
-            } else {
-                showToast('Debug Console', 'Console not available');
-            }
-            break;
-        case 'FORCE_SHOW_CONSOLE':
-            console.log('========================================');
-            console.log('FORCE SHOW CONSOLE TEST');
-            console.log('[Console] Visual Console ' + APP_VERSION_LABEL + ' (' + APP_VERSION + ')');
-            console.log('========================================');
-            console.log('Time:', new Date().toISOString());
-            console.error('This is an ERROR message');
-            console.warn('This is a WARN message');
-            
-            // Try to find the console div
-            const consoleDiv = document.getElementById('tv-debug-console');
-            if (consoleDiv) {
-                consoleDiv.style.display = 'block';
-                consoleDiv.style.zIndex = '999999';
-                console.log('✓ Console DIV found and forced visible')
-                showToast('Console', 'Console should be visible now');
-            } else {
-                console.error('✗ Console DIV not found!');
-                showToast('Console', 'ERROR: Console DIV not found');
-            }
             break;
     }
 }
