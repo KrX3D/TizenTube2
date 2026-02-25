@@ -1,8 +1,122 @@
 import { configRead } from '../config.js';
 import resolveCommand from '../resolveCommand.js';
-import { hideShorts } from './hideShorts.js';
-import { isShortItem } from './shortsCore.js';
 import { PatchSettings } from '../ui/customYTSettings.js';
+
+
+const PLAYLIST_PAGES = new Set(['playlist', 'playlists']);
+const BROWSE_PAGE_MAP = {
+  felibrary: 'library',
+  fehistory: 'history',
+  femy_youtube: 'playlist',
+  feplaylist_aggregation: 'playlists',
+  vlwl: 'playlist',
+  vlll: 'playlist'
+};
+
+const BROWSE_PAGE_PREFIX_MAP = {
+  vlpl: 'playlist'
+};
+
+function isPlaylistPage(page) {
+  return PLAYLIST_PAGES.has(page);
+}
+
+
+function shouldHideWatchedForPage(page) {
+  if (!configRead('enableHideWatchedVideos')) return false;
+  const pages = configRead('hideWatchedVideosPages') || [];
+  if (!Array.isArray(pages) || pages.length === 0) return true;
+  return pages.includes(page);
+}
+
+function shouldRunUniversalFilter(page) {
+  const shortsEnabled = configRead('enableShorts');
+  if (!shortsEnabled) return true;
+  return shouldHideWatchedForPage(page);
+}
+
+function resolveBrowseParamPage(browseParam) {
+  if (!browseParam) return null;
+  if (BROWSE_PAGE_MAP[browseParam]) return BROWSE_PAGE_MAP[browseParam];
+
+  for (const prefix in BROWSE_PAGE_PREFIX_MAP) {
+    if (browseParam.startsWith(prefix)) return BROWSE_PAGE_PREFIX_MAP[prefix];
+  }
+
+  return null;
+}
+
+function getShelfTitle(shelf) {
+  return (
+    shelf?.shelfRenderer?.title?.runs?.[0]?.text ||
+    shelf?.shelfRenderer?.title?.simpleText ||
+    shelf?.richShelfRenderer?.title?.runs?.[0]?.text ||
+    shelf?.richShelfRenderer?.title?.simpleText ||
+    shelf?.richSectionRenderer?.content?.richShelfRenderer?.title?.runs?.[0]?.text ||
+    shelf?.richSectionRenderer?.content?.richShelfRenderer?.title?.simpleText ||
+    ''
+  );
+}
+
+function hideShorts(shelves, shortsEnabled, onRemoveShelf) {
+  if (shortsEnabled || !Array.isArray(shelves)) return;
+
+  for (let i = shelves.length - 1; i >= 0; i--) {
+    const shelf = shelves[i];
+    if (!shelf) continue;
+
+    const isShortShelf = getShelfTitle(shelf).toLowerCase().includes('short') ||
+      shelf?.shelfRenderer?.tvhtml5ShelfRendererType === 'TVHTML5_SHELF_RENDERER_TYPE_SHORTS';
+
+    if (isShortShelf) {
+      onRemoveShelf?.(shelf);
+      shelves.splice(i, 1);
+      continue;
+    }
+
+    const items = shelf?.shelfRenderer?.content?.horizontalListRenderer?.items;
+    if (!Array.isArray(items)) continue;
+
+    shelf.shelfRenderer.content.horizontalListRenderer.items = items.filter(
+      (item) => item.tileRenderer?.tvhtml5ShelfRendererType !== 'TVHTML5_TILE_RENDERER_TYPE_SHORTS'
+    );
+  }
+}
+
+//KrX if removed breaks suscription, library all videos ar removed and hsorts on home page only 3 shelfs remain, so filters everything
+function isShortItem(item, { currentPage = '' } = {}) {
+  if (!item) return false;
+
+  if (item.tileRenderer) {
+    let lengthText = null;
+    const thumbnailOverlays = item.tileRenderer.header?.tileHeaderRenderer?.thumbnailOverlays;
+    if (thumbnailOverlays && Array.isArray(thumbnailOverlays)) {
+      const timeOverlay = thumbnailOverlays.find((overlay) => overlay.thumbnailOverlayTimeStatusRenderer);
+      if (timeOverlay) {
+        lengthText = timeOverlay.thumbnailOverlayTimeStatusRenderer.text?.simpleText;
+      }
+    }
+
+    if (!lengthText) {
+      lengthText = item.tileRenderer.metadata?.tileMetadataRenderer?.lines?.[0]?.lineRenderer?.items?.find(
+        (lineItem) => lineItem.lineItemRenderer?.badge || lineItem.lineItemRenderer?.text?.simpleText
+      )?.lineItemRenderer?.text?.simpleText;
+    }
+
+    if (lengthText) {
+      const durationMatch = lengthText.match(/^(\d+):(\d+)$/);
+      if (durationMatch) {
+        const totalSeconds = (parseInt(durationMatch[1], 10) * 60) + parseInt(durationMatch[2], 10);
+        // Shorts can be nowt till 3min
+        if (totalSeconds <= 180) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
+}
 
 function getVideoId(item) {
   return item?.tileRenderer?.contentId ||
@@ -17,17 +131,13 @@ function getVideoId(item) {
 function directFilterArray(arr, page, context = '') {
   if (!Array.isArray(arr) || arr.length === 0) return arr;
   
-  // ⭐ Check if this is a playlist page
-  let isPlaylistPage;
     
   const shortsEnabled = configRead('enableShorts');
   const threshold = Number(configRead('hideWatchedVideosThreshold') || 0);
   
-  // Check if we should filter watched videos on this page (EXACT match)
-  const shouldHideWatched = configRead('enableHideWatchedVideos');
+  const shouldHideWatched = shouldHideWatchedForPage(page);
   
-  // ⭐ Check if this is a playlist page
-  isPlaylistPage = (page === 'playlist' || page === 'playlists');
+  const playlistPage = isPlaylistPage(page);
   
   // ⭐ Initialize scroll helpers tracker
   if (!window._playlistScrollHelpers) {
@@ -39,7 +149,7 @@ function directFilterArray(arr, page, context = '') {
 
   // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
   let isLastBatch = false;
-  if (isPlaylistPage && window._isLastPlaylistBatch === true) {
+  if (playlistPage && window._isLastPlaylistBatch === true) {
     isLastBatch = true;
     // Clear the flag
     window._isLastPlaylistBatch = false;
@@ -70,7 +180,7 @@ function directFilterArray(arr, page, context = '') {
   
   // ⭐ KrX, needed or no videos at playlist if first batch is completly watched 
   // PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
-  if (isPlaylistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
+  if (playlistPage && filtered.length === 0 && arr.length > 0 && !isLastBatch) {
     
     const lastVideo = [...arr].reverse().find((item) => !!getVideoId(item)) || arr[arr.length - 1];
     const lastVideoId = getVideoId(lastVideo) || 'unknown';
@@ -81,7 +191,7 @@ function directFilterArray(arr, page, context = '') {
   }
   
   // ⭐ Clean up after filtering if last batch
-  if (isLastBatch && isPlaylistPage) {
+  if (isLastBatch && playlistPage) {
     window._lastHelperVideos = [];
     window._playlistScrollHelpers.clear();
   }
@@ -116,24 +226,28 @@ function scanAndFilterAllArrays(obj, page, path = 'root') {
     );
     
     if (hasShelves) {
-      // Filter shelves recursively
-      for (const key in obj) {
-        if (obj.hasOwnProperty(key)) {
-          const value = obj[key];
-          if (value && typeof value === 'object') {
-            scanAndFilterAllArrays(value, page, path + '[' + key + ']');
-          }
-        }
-      }
+      hideShorts(obj, configRead('enableShorts'));
 
-      // Then remove empty shelves
+      // Filter shelves recursively
       for (let i = obj.length - 1; i >= 0; i--) {
         const shelf = obj[i];
         if (!shelf) {
           obj.splice(i, 1);
           continue;
         }
-        
+        scanAndFilterAllArrays(shelf, page, path + '[' + i + ']');
+
+        const horizontalItems = shelf?.shelfRenderer?.content?.horizontalListRenderer?.items;
+        const gridItems = shelf?.shelfRenderer?.content?.gridRenderer?.items;
+        const richItems = shelf?.richShelfRenderer?.content?.richGridRenderer?.contents;
+        const hasItems =
+          (Array.isArray(horizontalItems) && horizontalItems.length > 0) ||
+          (Array.isArray(gridItems) && gridItems.length > 0) ||
+          (Array.isArray(richItems) && richItems.length > 0);
+
+        if (!hasItems && (shelf?.shelfRenderer || shelf?.richShelfRenderer || shelf?.gridRenderer)) {
+          obj.splice(i, 1);
+        }
       }
       return; // Don't return the array, we modified it in place
     }
@@ -173,13 +287,12 @@ JSON.parse = function () {
     // Scan and filter ALL arrays
     scanAndFilterAllArrays(r.contents.singleColumnBrowseResultsRenderer, page);
   }
-  // UNIVERSAL FALLBACK - Filter EVERYTHING if we're on a critical page
+  // UNIVERSAL FALLBACK - use configured watched-pages (and shorts when disabled)
   const currentPage = getCurrentPage();
-  const criticalPages = ['subscriptions', 'library', 'history', 'playlist', 'channel', 'watch'];
 
-  if (criticalPages.includes(currentPage) && !r.__universalFilterApplied) {
+  if (shouldRunUniversalFilter(currentPage) && !r.__universalFilterApplied) {
     r.__universalFilterApplied = true;
-    
+
     // Scan the ENTIRE response object and filter ALL video arrays
     scanAndFilterAllArrays(r, currentPage);
   }
@@ -282,65 +395,46 @@ function getCurrentPage() {
   if (browseParam.includes('fesubscription')) {
     detectedPage = 'subscriptions';
   }
-  
-  // Library and its sub-pages
-  else if (browseParam === 'felibrary') {
-    detectedPage = 'library';
-  }
-  else if (browseParam === 'fehistory') {
-    detectedPage = 'history';
-  }
-  else if (browseParam === 'femy_youtube') {
-    detectedPage = 'playlist'; // Watch Later via library tab
-  }
-  else if (browseParam === 'feplaylist_aggregation') {
-    detectedPage = 'playlists';
-  }
-  
-  // Individual playlists (VL prefix = Video List)
-  else if (browseParam.startsWith('vlpl')) {
-    detectedPage = 'playlist'; // User playlist
-  }
-  else if (browseParam === 'vlwl') {
-    detectedPage = 'playlist'; // Watch Later
-  }
-  else if (browseParam === 'vlll') {
-    detectedPage = 'playlist'; // Liked Videos
-  }
-  
-  // Topics (home variations)
-  else if (browseParam.includes('fetopics_music') || browseParam.includes('music')) {
-    detectedPage = 'music';
-  }
-  else if (browseParam.includes('fetopics_gaming') || browseParam.includes('gaming')) {
-    detectedPage = 'gaming';
-  }
-  else if (browseParam.includes('fetopics')) {
-    detectedPage = 'home';
-  }
-  
-  // Channel pages
-  else if (browseParam.startsWith('uc') && browseParam.length > 10) {
-    detectedPage = 'channel';
+  else {
+    const mappedBrowsePage = resolveBrowseParamPage(browseParam);
+    if (mappedBrowsePage) {
+      detectedPage = mappedBrowsePage;
+    }
+
+    // Topics (home variations)
+    else if (browseParam.includes('fetopics_music') || browseParam.includes('music')) {
+      detectedPage = 'music';
+    }
+    else if (browseParam.includes('fetopics_gaming') || browseParam.includes('gaming')) {
+      detectedPage = 'gaming';
+    }
+    else if (browseParam.includes('fetopics')) {
+      detectedPage = 'home';
+    }
+    
+    // Channel pages
+    else if (browseParam.startsWith('uc') && browseParam.length > 10) {
+      detectedPage = 'channel';
+    }
   }
   
   // PRIORITY 2: Check traditional patterns
-  else if (cleanHash.includes('/playlist') || combined.includes('list=')) {
+  if (detectedPage === 'other' && (cleanHash.includes('/playlist') || combined.includes('list='))) {
     detectedPage = 'playlist';
   }
-  else if (cleanHash.includes('/results') || cleanHash.includes('/search')) {
+  else if (detectedPage === 'other' && (cleanHash.includes('/results') || cleanHash.includes('/search'))) {
     detectedPage = 'search';
   }
-  else if (cleanHash.includes('/watch')) {
+  else if (detectedPage === 'other' && cleanHash.includes('/watch')) {
     detectedPage = 'watch';
   }
-  else if (cleanHash.includes('/@') || cleanHash.includes('/channel/')) {
+  else if (detectedPage === 'other' && (cleanHash.includes('/@') || cleanHash.includes('/channel/'))) {
     detectedPage = 'channel';
   }
-  else if (cleanHash.includes('/browse') && !browseParam) {
+  else if (detectedPage === 'other' && cleanHash.includes('/browse') && !browseParam) {
     detectedPage = 'home';
   }
-  else if (cleanHash === '' || cleanHash === '/') {
+  else if (detectedPage === 'other' && (cleanHash === '' || cleanHash === '/')) {
     detectedPage = 'home';
   }
   
