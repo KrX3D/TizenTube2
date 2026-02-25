@@ -44,22 +44,6 @@ function applyPatches() {
 
         const functions = extractAssignedFunctions(origMethod.toString());
 
-        const pipCommand = {
-            "type": "TRANSPORT_CONTROLS_BUTTON_TYPE_PIP",
-            "button": {
-                "buttonRenderer": ButtonRenderer(
-                    false,
-                    'Mini Player',
-                    'CLEAR_COOKIES',
-                    {
-                        customAction: {
-                            action: 'ENTER_PIP'
-                        }
-                    }
-                )
-            }
-        }
-
         const settingActionGroup = functions.find(func => {
             return func.rhs.includes('TRANSPORT_CONTROLS_BUTTON_TYPE_PLAYBACK_SETTINGS');
         }).left.split('.')[1];
@@ -94,40 +78,6 @@ function applyPatches() {
         }).left.split('.')[1];
 
         const engagementActionButton = functions.find(func => func.rhs.includes('props.data.engagementActions')).left.split('.')[1];
-
-        if (engagementActionButton && configRead('enableSpeedControlsButton')) {
-            const origEngagementActionButton = inst[engagementActionButton];
-            inst[engagementActionButton] = function () {
-                const res = origEngagementActionButton.apply(this, arguments);
-                res.find(item => item.type === 'TRANSPORT_CONTROLS_BUTTON_TYPE_SPEED') || res.push({
-                    type: 'TRANSPORT_CONTROLS_BUTTON_TYPE_SPEED',
-                    button: {
-                        buttonRenderer: ButtonRenderer(
-                            false,
-                            "Speed Controls",
-                            'SLOW_MOTION_VIDEO',
-                            {
-                                customAction:
-                                {
-                                    action: 'TT_SPEED_SETTINGS_SHOW',
-                                }
-                            }
-                        )
-                    }
-                });
-                return res;
-            }
-        }
-
-        if (!configRead('enableSuperThanksButton')) {
-            const origEngagementActionButton = inst[engagementActionButton];
-            inst[engagementActionButton] = function () {
-                const res = origEngagementActionButton.apply(this, arguments);
-                const superThanksFiltered = res.filter(item => item.type !== 'TRANSPORT_CONTROLS_BUTTON_TYPE_SUPER_THANKS');
-                const shoppingFiltered = superThanksFiltered.filter(item => item.type !== 'TRANSPORT_CONTROLS_BUTTON_TYPE_SHOPPING');
-                return shoppingFiltered;
-            }
-        }
 
         if (configRead('enablePreviousNextButtons')) {
             if (!previousButtonName || !nextButtonName) return inst;
