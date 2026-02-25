@@ -255,30 +255,9 @@ function processShelves(shelves) {
       // Handle shelfRenderer
       if (shelve.shelfRenderer) {
         
-
-        // verticalListRenderer
-        if (shelve.shelfRenderer.content?.verticalListRenderer?.items) {
-          let items = shelve.shelfRenderer.content.verticalListRenderer.items;
-          const originalItems = Array.isArray(items) ? items.slice() : [];
-          
-          if (shouldHideWatched) {
-            items = hideVideo(items);
-          }
-          if (shouldHideWatched && items.length === 0 && originalItems.length > 0) {
-            items = originalItems;
-          }
-          
-          shelve.shelfRenderer.content.verticalListRenderer.items = items;
-          
-          if (items.length === 0) {
-            shelves.splice(i, 1);
-            continue;
-          }
-        }
-      }
       
       // Handle richShelfRenderer (subscriptions)
-      else if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
+      if (shelve.richShelfRenderer?.content?.richGridRenderer?.contents) {
         let contents = shelve.richShelfRenderer.content.richGridRenderer.contents;
         const originalContents = Array.isArray(contents) ? contents.slice() : [];
         
