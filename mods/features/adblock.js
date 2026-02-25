@@ -64,6 +64,14 @@ function directFilterArray(arr, page, context = '') {
   if (!window._lastHelperVideos) {
     window._lastHelperVideos = [];
   }
+
+  // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
+  let isLastBatch = false;
+  if (isPlaylistPage && window._isLastPlaylistBatch === true) {
+    isLastBatch = true;
+    // Clear the flag
+    window._isLastPlaylistBatch = false;
+  }
   
   const filtered = arr.filter(item => {
     if (!item) return true;
@@ -87,14 +95,6 @@ function directFilterArray(arr, page, context = '') {
     }
     return true;
   });
-
-  // ⭐ NEW: Check if this is the LAST batch (using flag from response level)
-  let isLastBatch = false;
-  if (isPlaylistPage && window._isLastPlaylistBatch === true) {
-    isLastBatch = true;
-    // Clear the flag
-    window._isLastPlaylistBatch = false;
-  }
   
   // ⭐ KrX, needed or no videos at playlist if first batch is completly watched 
   // PLAYLIST SAFEGUARD: keep one helper tile so TV can request next batch.
